@@ -6,5 +6,6 @@ namespace QuickChatter.Models
     {
         public string Username { get; set; }
         public string Ip { get; set; }
+        public bool IsAvailable { get; set; }
     }
 }

@@ -17,7 +17,7 @@ namespace QuickChatter.Server
 
             foreach (var connectedClient in connectedClients)
             {
-                mappedClients.Add(new User { Ip = connectedClient.Ip, Username = connectedClient.Username });
+                mappedClients.Add(new User { Ip = connectedClient.Ip, Username = connectedClient.Username, IsAvailable = connectedClient.IsAvailable });
             }
 
             //Serialze the clients list to a json string

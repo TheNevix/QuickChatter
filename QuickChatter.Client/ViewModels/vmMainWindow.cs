@@ -22,6 +22,24 @@ namespace QuickChatter.Client.ViewModels
             set => SetProperty(ref _currentControl, value);
         }
 
+        //Username
+        private string _username;
+
+        public string Username
+        {
+            get => _username;
+            set => SetProperty(ref _username, value);
+        }
+
+        //Holds the current UserControl
+        private object _onlineUsers;
+
+        public object OnlineUsers
+        {
+            get => _onlineUsers;
+            set => SetProperty(ref _onlineUsers, value);
+        }
+
         //Connect Click Event
         public ICommand ConnectCommand { get; }
 
@@ -31,7 +49,8 @@ namespace QuickChatter.Client.ViewModels
             ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick); ;
             CurrentControl = new ucConnect();
 
-            }
+            Username = "eg. TheLegend27";
+        }
 
         /// <summary>
         /// Method to connect to the server and listen to updates
@@ -43,7 +62,7 @@ namespace QuickChatter.Client.ViewModels
             _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
 
             //Connect with the server
-            var isConnected = await ServerHelper.ConnectToServer(_client, _writer, "");
+            var isConnected = await ServerHelper.ConnectToServer(_client, _writer, Username);
 
             //If failed
             if (!isConnected)
@@ -54,7 +73,7 @@ namespace QuickChatter.Client.ViewModels
             else
             {
                 //Listen for updates
-                ServerHelper.ListenForUpdates(_client);
+                ServerHelper.ListenForUpdates(_client, this);
 
                 //Navigate to the main screen
                 CurrentControl = new ucMainScreen();

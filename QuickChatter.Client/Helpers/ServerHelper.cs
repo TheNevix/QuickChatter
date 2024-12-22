@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using QuickChatter.Client.ViewModels;
 using QuickChatter.Models;
 using System.IO;
 using System.Net.Sockets;
@@ -39,7 +40,7 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
-        public static async Task ListenForUpdates(TcpClient client)
+        public static async Task ListenForUpdates(TcpClient client, vmMainWindow vm)
         {
             try
             {
@@ -53,7 +54,7 @@ namespace QuickChatter.Client.Helpers
                     }
                     else
                     {
-                        var users = JsonConvert.DeserializeObject<List<User>>(message);
+                        vm.OnlineUsers = JsonConvert.DeserializeObject<List<User>>(message);
                         var e = 5;
                     }
                 }

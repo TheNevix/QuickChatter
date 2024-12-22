@@ -35,7 +35,7 @@ class Program
         try
         {
             //Add the new Client
-            ConnectedClients.Add(new ConnectedClient { Client = client });
+            ConnectedClients.Add(new ConnectedClient { Client = client, IsAvailable = true });
 
             using NetworkStream stream = client.GetStream();
             using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
