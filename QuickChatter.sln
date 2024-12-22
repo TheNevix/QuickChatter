@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickChatter.Client", "Quic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickChatter.Server", "QuickChatter.Server\QuickChatter.Server.csproj", "{6868162F-4C7A-487A-8E33-CEF9C57FDA1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickChatter.Models", "QuickChatter.Models\QuickChatter.Models.csproj", "{F930C236-FA0E-4998-905D-BFA87387D94A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6868162F-4C7A-487A-8E33-CEF9C57FDA1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6868162F-4C7A-487A-8E33-CEF9C57FDA1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6868162F-4C7A-487A-8E33-CEF9C57FDA1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F930C236-FA0E-4998-905D-BFA87387D94A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F930C236-FA0E-4998-905D-BFA87387D94A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F930C236-FA0E-4998-905D-BFA87387D94A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F930C236-FA0E-4998-905D-BFA87387D94A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
