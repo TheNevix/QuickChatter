@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using QuickChatter.Client.ViewModels;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +20,7 @@ namespace QuickChatter.Client
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new vmMainWindow();
         }
     }
 }
