@@ -1,6 +1,7 @@
 ﻿using QuickChatter.Client.Helpers;
 using QuickChatter.Client.Views.Controls;
 using QuickChatter.Models;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -33,9 +34,9 @@ namespace QuickChatter.Client.ViewModels
         }
 
         //Holds the current UserControl
-        private List<User> _onlineUsers;
+        private ObservableCollection<User> _onlineUsers;
 
-        public List<User> OnlineUsers
+        public ObservableCollection<User> OnlineUsers
         {
             get => _onlineUsers;
             set => SetProperty(ref _onlineUsers, value);

@@ -3,6 +3,8 @@ using QuickChatter.Client.ViewModels;
 using QuickChatter.Models;
 using QuickChatter.Models.Settings;
 using QuickChatter.Server.Settings;
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -87,8 +89,26 @@ namespace QuickChatter.Client.Helpers
                         }
                         else if (parts[0] == ResponseCode.Connected)
                         {
-                            vm.OnlineUsers = JsonConvert.DeserializeObject<List<User>>(parts[1]);
+                            vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
                             var e = 5;
+                        }
+                        else if (parts[0] == ResponseCode.ConnectedUser)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                vm.OnlineUsers.Add(JsonConvert.DeserializeObject<User>(parts[1]));
+                            });
+                        }
+                        else if (parts[0] == ResponseCode.UpdatedUsers)
+                        {
+                            var updatedUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                foreach (var updatedUser in updatedUsers)
+                                {
+                                    vm.OnlineUsers.First(u => u.Id == updatedUser.Id).IsAvailable = updatedUser.IsAvailable;
+                                }
+                            });
                         }
                     }
                 }

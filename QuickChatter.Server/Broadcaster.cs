@@ -19,7 +19,7 @@ namespace QuickChatter.Server
 
             foreach (var connectedClient in connectedClients)
             {
-                mappedClients.Add(new User { Ip = connectedClient.Ip, Username = connectedClient.Username, IsAvailable = connectedClient.IsAvailable });
+                mappedClients.Add(new User { Id = connectedClient.Id, Ip = connectedClient.Ip, Username = connectedClient.Username, IsAvailable = connectedClient.IsAvailable });
             }
 
             string jsonClients = JsonConvert.SerializeObject(mappedClients);
@@ -31,6 +31,70 @@ namespace QuickChatter.Server
             byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
 
             requestingClient.Client.GetStream().WriteAsync(data, 0, data.Length);
+        }
+
+        /// <summary>
+        /// Broadcasts a list of connected clients to a requesting client
+        /// </summary>
+        /// <param name="connectedClients">A list of connected clients</param>
+        /// <param name="requestingClient">The client requesting the info</param>
+        public static async void SendNewOnlineUser(List<ConnectedClient> connectedClients, ConnectedClient newClient)
+        {
+            var mappedClient = new User
+            {
+                Id = newClient.Id,
+                Ip = newClient.Ip,
+                IsAvailable = newClient.IsAvailable,
+                Username = newClient.Username,
+            };
+
+            string jsonClient = JsonConvert.SerializeObject(mappedClient);
+
+            //Send a message to the accepting client
+            string message = $"{ResponseCode.ConnectedUser}|{jsonClient}";
+
+            //Encode
+            byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
+            //Send
+            foreach (var client in connectedClients)
+            {
+                if (client.Username == newClient.Username || client.Client.Connected == false)
+                {
+                    continue;
+                }
+
+                client.Client.GetStream().WriteAsync(data, 0, data.Length);
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts a list of connected clients to a requesting client
+        /// </summary>
+        /// <param name="connectedClients">A list of connected clients</param>
+        /// <param name="requestingClient">The client requesting the info</param>
+        public static async void SendUpdatedClients(List<ConnectedClient> connectedClients, List<ConnectedClient> updatedClients)
+        {
+            var mappedClients = new List<User>();
+
+            foreach (var updatedClient in updatedClients)
+            {
+                mappedClients.Add(new User { Id = updatedClient.Id, Ip = updatedClient.Ip, Username = updatedClient.Username, IsAvailable = updatedClient.IsAvailable });
+            }
+
+            string jsonUpdatedClients = JsonConvert.SerializeObject(mappedClients);
+
+            //Create the message
+            string message = $"{ResponseCode.UpdatedUsers}|{jsonUpdatedClients}";
+
+            //Encode
+            byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
+            ////Send
+            foreach (var client in connectedClients)
+            {
+                client.Client.GetStream().WriteAsync(data, 0, data.Length);
+            }
         }
 
         /// <summary>

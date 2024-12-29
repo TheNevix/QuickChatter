@@ -78,7 +78,7 @@ class Program
     public static async Task HandleConnect(TcpClient client, string[] parts)
     {
         //Add the new Client
-        ConnectedClients.Add(new ConnectedClient { Client = client, IsAvailable = true });
+        ConnectedClients.Add(new ConnectedClient { Id = Guid.NewGuid(), Client = client, IsAvailable = true });
 
         //Get the username
         string username = parts[1];
@@ -95,6 +95,9 @@ class Program
 
         //Send the new client the info of all the connected users
         Broadcaster.SendListOfConnectedUsers(ConnectedClients, ConnectedClients[foundClientIndex]);
+
+        //Send new added user to everyone
+        Broadcaster.SendNewOnlineUser(ConnectedClients, ConnectedClients[foundClientIndex]);
     }
 
     public static async Task HandleInvite(TcpClient client, string[] parts)
@@ -111,8 +114,15 @@ class Program
             Messages = new List<ConversationMessage>()
         });
 
+        //Update status to unavailable
+        ConnectedClients[accepterIndex].IsAvailable = false;
+        ConnectedClients[inviterIndex].IsAvailable = false;
+
         //Send invite for accepter to accept
         Broadcaster.SendConversationInvite(ConnectedClients[accepterIndex], ConnectedClients[inviterIndex]);
+
+        //Send updated status to everyone
+        Broadcaster.SendUpdatedClients(ConnectedClients, new List<ConnectedClient> { ConnectedClients[accepterIndex], ConnectedClients[inviterIndex] });
     }
 }
 
