@@ -9,24 +9,71 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <converters:BoolToBrushConverter x:Key="BoolToBrushConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </UserControl.Resources>
-    <Grid Background="CadetBlue">
-        <ListBox ItemsSource="{Binding OnlineUsers}" Width="200" HorizontalAlignment="Left">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <!-- Circle indicating status -->
-                        <Ellipse Width="10" Height="10" Margin="0,0,10,0" 
-                         Fill="{Binding IsAvailable, Converter={StaticResource BoolToBrushConverter}}" />
+    <Grid Background="Black">
 
-                        <!-- IP and Username -->
-                        <TextBlock Text="{Binding Ip}" FontWeight="Bold" Margin="0,0,10,0" />
-                        <TextBlock Text=" (" Foreground="Gray" />
-                        <TextBlock Text="{Binding Username}" Foreground="Green" />
-                        <TextBlock Text=")" Foreground="Gray" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <Grid Width="200" HorizontalAlignment="Left" Background="#2b2c2e">
+            <TextBlock Text="Online Users" FontSize="16" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center" Foreground="#d8dde6"/>
+            <ListBox ItemsSource="{Binding OnlineUsers}" Margin="00, 30, 0, 0" Background="#2b2c2e" BorderThickness="0" SelectedItem="{Binding SelectedUser, Mode=TwoWay}" >
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <!-- Circle indicating status -->
+                            <Ellipse Width="10" Height="10" Margin="0,0,10,0" Fill="{Binding IsAvailable, Converter={StaticResource BoolToBrushConverter}}" />
+
+                            <!-- IP and Username -->
+                            <TextBlock Text="{Binding Ip}" FontWeight="Bold" Margin="0,0,10,0" Foreground="#d8dde6" />
+                            <TextBlock Text=" (" Foreground="Gray" />
+                            <TextBlock Text="{Binding Username}" Foreground="Gray" />
+                            <TextBlock Text=")" Foreground="Gray" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <Grid Margin="201, 0, 0, 0" Background="#2b2c2e">
+            <TextBlock Text="QuickChatter" FontSize="30" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center" Foreground="#d8dde6"/>
+            <StackPanel HorizontalAlignment="Center" Margin="0,50, 0, 0">
+                <!-- First TextBlock with Ellipse -->
+                <TextBlock FontSize="12" FontWeight="Bold" Margin="0,0,0,10" Foreground="#d8dde6" TextAlignment="Center">
+        To start a conversation with someone, simply click on a user that has a
+        <InlineUIContainer>
+            <Ellipse Width="10" Height="10" Fill="Green" Margin="0, 0, 2, 0"/>
+        </InlineUIContainer>
+        circle
+                </TextBlock>
+
+                <!-- Second TextBlock with Ellipse -->
+                <TextBlock FontSize="12" FontWeight="Bold" Margin="0,0,0,10" Foreground="#d8dde6" TextAlignment="Center">
+        (active) and they will be notified that you would like to start a conversation with them.
+                </TextBlock>
+
+                <!-- Third TextBlock with Ellipse -->
+                <TextBlock FontSize="12" FontWeight="Bold" Margin="0,0,0,10" Foreground="#d8dde6" TextAlignment="Center">
+        A
+        <InlineUIContainer>
+            <Ellipse Width="10" Height="10" Fill="Red" Margin="0, 0, 02, 0"/>
+        </InlineUIContainer>
+        circle indicates that they are already in a conversation.
+                </TextBlock>
+            </StackPanel>
+
+            <StackPanel HorizontalAlignment="Center" Margin="0,50, 0, 0" Visibility="{Binding SelectedUser, Converter={StaticResource NullToVisibilityConverter}}">
+                <TextBlock FontSize="12" FontWeight="Bold" Margin="0,200,0,10" Foreground="#d8dde6" TextAlignment="Center" >
+                    You selected
+                    <Run Text="{Binding SelectedUser.Username}" Foreground="Green" />.
+                    <LineBreak />
+                    This user if currently available
+                </TextBlock>
+                <Button Content="Invite for conversation" Command="{Binding InviteForConversationCommand}" Visibility="{Binding SelectedUser.IsAvailable, Converter={StaticResource BoolToVisibilityConverter}}"></Button>
+
+            </StackPanel>
+        </Grid>
+
+
+
     </Grid>
 </UserControl>

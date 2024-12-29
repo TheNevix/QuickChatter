@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using QuickChatter.Models;
+using QuickChatter.Models.Settings;
 using QuickChatter.Server;
 using System.Net;
 using System.Net.Sockets;
@@ -9,6 +10,7 @@ class Program
 {
     //List of connected clients
     private static List<ConnectedClient> ConnectedClients = new List<ConnectedClient>();
+    private static List<Conversation> ClientConversations = new List<Conversation>();
 
     static async Task Main(string[] args)
     {
@@ -34,9 +36,6 @@ class Program
     {
         try
         {
-            //Add the new Client
-            ConnectedClients.Add(new ConnectedClient { Client = client, IsAvailable = true });
-
             using NetworkStream stream = client.GetStream();
             using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
 
@@ -52,29 +51,17 @@ class Program
                 Console.WriteLine($"Received: {receivedData}");
 
                 //Parse the received data {username,ip}
-                var parts = receivedData.Split(',');
+                var parts = receivedData.Split('|');
 
                 //Check if we have exactly 2 parts
-                if (parts.Length == 2)
+                if (parts[0] == RequestCode.Connect)
                 {
-                    //Get the username
-                    string username = parts[0];
-
-                    //Get the ip
-                    string ip = parts[1];
-
-                    //Find the client index in the list of connected clients
-                    var foundClientIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
-
-                    //Update their info
-                    ConnectedClients[foundClientIndex].Ip = ip;
-                    ConnectedClients[foundClientIndex].Username = username;
-
-                    //Send the new client the info of all the connected users
-                    Broadcaster.SendListOfConnectedUsers(ConnectedClients, ConnectedClients[foundClientIndex]);
-                    
-                    //Send all clients info about the newly added client
-                    //BroadcastUserCount();
+                    //Handle Connect
+                    HandleConnect(client, parts);
+                }
+                else if (parts[0] == RequestCode.InviteForConversation)
+                {
+                    HandleInvite(client, parts);
                 }
             }
         }
@@ -87,4 +74,45 @@ class Program
             client.Close();
         }
     }
+
+    public static async Task HandleConnect(TcpClient client, string[] parts)
+    {
+        //Add the new Client
+        ConnectedClients.Add(new ConnectedClient { Client = client, IsAvailable = true });
+
+        //Get the username
+        string username = parts[1];
+
+        //Get the ip
+        string ip = parts[2];
+
+        //Find the client index in the list of connected clients
+        var foundClientIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
+
+        //Update their info
+        ConnectedClients[foundClientIndex].Ip = ip;
+        ConnectedClients[foundClientIndex].Username = username;
+
+        //Send the new client the info of all the connected users
+        Broadcaster.SendListOfConnectedUsers(ConnectedClients, ConnectedClients[foundClientIndex]);
+    }
+
+    public static async Task HandleInvite(TcpClient client, string[] parts)
+    {
+        var accepterIndex = ConnectedClients.FindIndex(cc => cc.Username == parts[1]);
+        var inviterIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
+
+        //Add them to the conversation list
+        ClientConversations.Add(new Conversation
+        {
+            Accepter = ConnectedClients[accepterIndex],
+            Inviter = ConnectedClients[inviterIndex],
+            IsAccepted = false,
+            Messages = new List<ConversationMessage>()
+        });
+
+        //Send invite for accepter to accept
+        Broadcaster.SendConversationInvite(ConnectedClients[accepterIndex], ConnectedClients[inviterIndex]);
+    }
 }
+

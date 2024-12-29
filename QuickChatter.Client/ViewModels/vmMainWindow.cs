@@ -1,5 +1,6 @@
 ﻿using QuickChatter.Client.Helpers;
 using QuickChatter.Client.Views.Controls;
+using QuickChatter.Models;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -32,21 +33,42 @@ namespace QuickChatter.Client.ViewModels
         }
 
         //Holds the current UserControl
-        private object _onlineUsers;
+        private List<User> _onlineUsers;
 
-        public object OnlineUsers
+        public List<User> OnlineUsers
         {
             get => _onlineUsers;
             set => SetProperty(ref _onlineUsers, value);
         }
 
+        //Selected user from the list of online users
+        private User _selectedUser;
+
+        public User SelectedUser
+        {
+            get { return _selectedUser; }
+            set
+            {
+                if (_selectedUser != value)
+                {
+                    _selectedUser = value;
+                    OnPropertyChanged(nameof(SelectedUser)); // Notify that the property changed
+                }
+            }
+        }
+
         //Connect Click Event
         public ICommand ConnectCommand { get; }
+
+        //Invite user for conversation Event
+        public ICommand InviteForConversationCommand { get; }
 
         //Constructor
         public vmMainWindow()
         {
-            ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick); ;
+            ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick);
+            InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
+
             CurrentControl = new ucConnect();
 
             Username = "eg. TheLegend27";
@@ -78,6 +100,15 @@ namespace QuickChatter.Client.ViewModels
                 //Navigate to the main screen
                 CurrentControl = new ucMainScreen();
             }
+        }
+
+        private async void InviteForConversation(object sender)
+        {
+            //Send to the server a message that we want to chat with the selected user
+            ServerHelper.InviteForConversation(_client, _writer, SelectedUser);
+
+            //Show a popup to current client with information
+            MessageBox.Show($"Waiting for {_selectedUser.Username} to accept the invite");
         }
 
         private bool CanButtonClick(object parameter)
