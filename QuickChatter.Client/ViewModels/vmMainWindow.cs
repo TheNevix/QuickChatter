@@ -1,6 +1,7 @@
 ﻿using QuickChatter.Client.Helpers;
 using QuickChatter.Client.Views.Controls;
 using QuickChatter.Models;
+using QuickChatter.Models.Settings;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Sockets;
@@ -42,6 +43,13 @@ namespace QuickChatter.Client.ViewModels
             set => SetProperty(ref _onlineUsers, value);
         }
 
+        public Conversation _conversation;
+        public Conversation Conversation
+        {
+            get => _conversation;
+            set => SetProperty(ref _conversation, value);
+        }
+
         //Selected user from the list of online users
         private User _selectedUser;
 
@@ -72,7 +80,60 @@ namespace QuickChatter.Client.ViewModels
 
             CurrentControl = new ucConnect();
 
-            Username = "eg. TheLegend27";
+            Username = "Pinokkio";
+            UserSettings.Username = "Pinokkio";
+
+            Conversation = new Conversation
+            {
+                Accepter = new ConnectedClient
+                {
+                    Client = null,
+                    Id = Guid.NewGuid(),
+                    Ip = "127.0.0.1",
+                    IsAvailable = false,
+                    Username = "Pinokkio"
+                },
+                Inviter = new ConnectedClient
+                {
+                    Client = null,
+                    Id = Guid.NewGuid(),
+                    Ip = "127.0.0.1",
+                    IsAvailable = false,
+                    Username = "Roodkapje"
+                },
+
+                IsAccepted = true,
+                Messages = new List<ConversationMessage>
+                {
+                    new ConversationMessage
+                    {
+                        Message = "Test 1",
+                        SentBy = new ConnectedClient
+                        {
+                            Client = null,
+                            Id = Guid.NewGuid(),
+                            Ip = "127.0.0.1",
+                            IsAvailable = false,
+                            Username = "Pinokkio"
+                        },
+                        SentOn = DateTime.UtcNow,
+                    },
+                    new ConversationMessage
+                    {
+                        Message = "Test 2",
+                        SentBy = new ConnectedClient
+                        {
+                            Client = null,
+                            Id = Guid.NewGuid(),
+                            Ip = "127.0.0.1",
+                            IsAvailable = false,
+                            Username = "Roodkapje"
+                        },
+                        SentOn = DateTime.UtcNow,
+                    }
+                }
+            };
+
         }
 
         /// <summary>
@@ -99,7 +160,7 @@ namespace QuickChatter.Client.ViewModels
                 ServerHelper.ListenForUpdates(_client, this);
 
                 //Navigate to the main screen
-                CurrentControl = new ucMainScreen();
+                CurrentControl = new ucConversation();
             }
         }
 
