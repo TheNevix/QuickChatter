@@ -63,6 +63,10 @@ class Program
                 {
                     HandleInvite(client, parts);
                 }
+                else if (parts[0] == RequestCode.AcceptConversationInvite)
+                {
+                    HandleInviteAccept(client, parts);
+                }
             }
         }
         catch (Exception ex)
@@ -105,9 +109,12 @@ class Program
         var accepterIndex = ConnectedClients.FindIndex(cc => cc.Username == parts[1]);
         var inviterIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
 
+        Guid conversationId = Guid.NewGuid();
+
         //Add them to the conversation list
         ClientConversations.Add(new Conversation
         {
+            Id = conversationId,
             Accepter = ConnectedClients[accepterIndex],
             Inviter = ConnectedClients[inviterIndex],
             IsAccepted = false,
@@ -119,10 +126,20 @@ class Program
         ConnectedClients[inviterIndex].IsAvailable = false;
 
         //Send invite for accepter to accept
-        Broadcaster.SendConversationInvite(ConnectedClients[accepterIndex], ConnectedClients[inviterIndex]);
+        Broadcaster.SendConversationInvite(ConnectedClients[accepterIndex], ConnectedClients[inviterIndex], conversationId.ToString());
 
         //Send updated status to everyone
         Broadcaster.SendUpdatedClients(ConnectedClients, new List<ConnectedClient> { ConnectedClients[accepterIndex], ConnectedClients[inviterIndex] });
+    }
+
+    public static async Task HandleInviteAccept(TcpClient client, string[] parts)
+    {
+        var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
+
+        ClientConversations[conversationIndex].IsAccepted = true;
+
+        //Send invite for accepter to accept
+        Broadcaster.SendConversationInviteAccepted(ClientConversations[conversationIndex]);
     }
 }
 

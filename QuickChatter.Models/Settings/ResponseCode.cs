@@ -7,5 +7,6 @@
         public static string ConnectedUser = "CONNECTED USER";
         public static string DisconnectedUser = "DISCONNECTED USER";
         public static string UpdatedUsers = "UPDATED USERS";
+        public static string AcceptedInvite = "ACCEPTED INVITE";
     }
 }

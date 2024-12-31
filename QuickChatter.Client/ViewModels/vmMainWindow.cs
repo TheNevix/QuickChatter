@@ -80,60 +80,7 @@ namespace QuickChatter.Client.ViewModels
 
             CurrentControl = new ucConnect();
 
-            Username = "Pinokkio";
-            UserSettings.Username = "Pinokkio";
-
-            Conversation = new Conversation
-            {
-                Accepter = new ConnectedClient
-                {
-                    Client = null,
-                    Id = Guid.NewGuid(),
-                    Ip = "127.0.0.1",
-                    IsAvailable = false,
-                    Username = "Pinokkio"
-                },
-                Inviter = new ConnectedClient
-                {
-                    Client = null,
-                    Id = Guid.NewGuid(),
-                    Ip = "127.0.0.1",
-                    IsAvailable = false,
-                    Username = "Roodkapje"
-                },
-
-                IsAccepted = true,
-                Messages = new List<ConversationMessage>
-                {
-                    new ConversationMessage
-                    {
-                        Message = "Test 1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                        SentBy = new ConnectedClient
-                        {
-                            Client = null,
-                            Id = Guid.NewGuid(),
-                            Ip = "127.0.0.1",
-                            IsAvailable = false,
-                            Username = "Pinokkio"
-                        },
-                        SentOn = DateTime.UtcNow,
-                    },
-                    new ConversationMessage
-                    {
-                        Message = "Test 2",
-                        SentBy = new ConnectedClient
-                        {
-                            Client = null,
-                            Id = Guid.NewGuid(),
-                            Ip = "127.0.0.1",
-                            IsAvailable = false,
-                            Username = "Roodkapje"
-                        },
-                        SentOn = DateTime.UtcNow,
-                    }
-                }
-            };
-
+            Username = "eg. TheLegend27";
         }
 
         /// <summary>
@@ -142,6 +89,7 @@ namespace QuickChatter.Client.ViewModels
         /// <param name="sender"></param>
         private async void ConnectToServer(object sender)
         {
+            UserSettings.Username = Username;
             _client = new TcpClient("127.0.0.1", 5000);
             _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
 
@@ -157,10 +105,10 @@ namespace QuickChatter.Client.ViewModels
             else
             {
                 //Listen for updates
-                ServerHelper.ListenForUpdates(_client, this);
+                ServerHelper.ListenForUpdates(_client, this, _writer);
 
                 //Navigate to the main screen
-                CurrentControl = new ucConversation();
+                CurrentControl = new ucMainScreen();
             }
         }
 

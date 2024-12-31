@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using QuickChatter.Client.ViewModels;
+using QuickChatter.Client.Views.Controls;
 using QuickChatter.Models;
 using QuickChatter.Models.Settings;
 using QuickChatter.Server.Settings;
@@ -67,7 +68,29 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
-        public static async Task ListenForUpdates(TcpClient client, vmMainWindow vm)
+        /// <summary>
+        /// Invite for conversation
+        /// </summary>
+        /// <param name="client">The client</param>
+        /// <param name="writer">The writer</param>
+        /// <param name="username">The username that the client entered</param>
+        /// <returns>Either true if successfully connected, false if an error occured.</returns>
+        public static async Task<bool> AcceptConversationInvite(TcpClient client, StreamWriter writer, string conversationId)
+        {
+            try
+            {
+                //Send info to the server to invite an user for a conversation
+                await writer.WriteLineAsync($"{RequestCode.AcceptConversationInvite}|{conversationId}|{UserSettings.Username}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static async Task ListenForUpdates(TcpClient client, vmMainWindow vm, StreamWriter writer)
         {
             try
             {
@@ -85,7 +108,13 @@ namespace QuickChatter.Client.Helpers
 
                         if (parts[0] == ResponseCode.InviteReceived)
                         {
-                            var result = MessageBox.Show(parts[1], "You have been invited", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                            var result = MessageBox.Show(parts[2], "You have been invited", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                            if (result == MessageBoxResult.Yes) 
+                            {
+                                //Send invite accepted
+                                AcceptConversationInvite(client, writer, parts[1]);
+                            }
                         }
                         else if (parts[0] == ResponseCode.Connected)
                         {
@@ -108,6 +137,13 @@ namespace QuickChatter.Client.Helpers
                                 {
                                     vm.OnlineUsers.First(u => u.Id == updatedUser.Id).IsAvailable = updatedUser.IsAvailable;
                                 }
+                            });
+                        }
+                        else if (parts[0] == ResponseCode.AcceptedInvite)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                vm.CurrentControl = new ucConversation();
                             });
                         }
                     }

@@ -102,16 +102,37 @@ namespace QuickChatter.Server
         /// </summary>
         /// <param name="connectedClients">A list of connected clients</param>
         /// <param name="requestingClient">The client requesting the info</param>
-        public static async void SendConversationInvite(ConnectedClient accepter, ConnectedClient inviter)
+        public static async void SendConversationInvite(ConnectedClient accepter, ConnectedClient inviter, string conversationId)
         {
             //Send a message to the accepting client
-            string message = $"{ResponseCode.InviteReceived}|{ResponseMessage.AcceptInviteMessage.Replace("USERNAME", inviter.Username)}";
+            string message = $"{ResponseCode.InviteReceived}|{conversationId}|{ResponseMessage.AcceptInviteMessage.Replace("USERNAME", inviter.Username)}";
 
             //Encode
             byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
 
             //Send
             accepter.Client.GetStream().WriteAsync(data, 0, data.Length);
+        }
+
+        /// <summary>
+        /// Broadcasts a list of connected clients to a requesting client
+        /// </summary>
+        /// <param name="connectedClients">A list of connected clients</param>
+        /// <param name="requestingClient">The client requesting the info</param>
+        public static async void SendConversationInviteAccepted(Conversation conversation)
+        {
+            //Send a message to the accepting client
+            string message = $"{ResponseCode.AcceptedInvite}";
+
+            //Encode
+            byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
+            //Send
+            if (conversation.Inviter.Client.Connected && conversation.Accepter.Client.Connected)
+            {
+                conversation.Inviter.Client.GetStream().WriteAsync(data, 0, data.Length);
+                conversation.Accepter.Client.GetStream().WriteAsync(data, 0, data.Length);
+            }
         }
     }
 }
