@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using QuickChatter.Models;
+﻿using QuickChatter.Models;
 using QuickChatter.Models.Settings;
 using QuickChatter.Server;
 using System.Net;
@@ -66,6 +65,10 @@ class Program
                 else if (parts[0] == RequestCode.AcceptConversationInvite)
                 {
                     HandleInviteAccept(client, parts);
+                }
+                else if (parts[0] == RequestCode.SendConversationMessage)
+                {
+                    HandleConversationMessage(client, parts);
                 }
             }
         }
@@ -140,6 +143,44 @@ class Program
 
         //Send invite for accepter to accept
         Broadcaster.SendConversationInviteAccepted(ClientConversations[conversationIndex]);
+    }
+
+    public static async Task HandleConversationMessage(TcpClient client, string[] parts)
+    {
+        ConnectedClient sender = new ConnectedClient();
+        ConnectedClient receiver = new ConnectedClient();
+        var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
+
+        //Check who sended it
+        if (ClientConversations[conversationIndex].Inviter.Id.ToString() == parts[2])
+        {
+            sender = ClientConversations[conversationIndex].Inviter;
+            receiver = ClientConversations[conversationIndex].Accepter;
+        }
+        else
+        {
+            sender = ClientConversations[conversationIndex].Accepter;
+            receiver = ClientConversations[conversationIndex].Inviter;
+        }
+
+        var convoMessage = new ConversationMessage
+        {
+            Message = parts[3],
+            SentBy = new User
+            {
+                Id = sender.Id,
+                IsAvailable = false,
+                Username = sender.Username,
+                Ip = sender.Ip,
+            },
+            SentOn = DateTime.UtcNow,
+        };
+
+        //Add the message to the list
+        ClientConversations[conversationIndex].Messages.Add(convoMessage);
+
+        //Send the received message to the other client
+        Broadcaster.SendConversationMessage(receiver, convoMessage);
     }
 }
 

@@ -90,6 +90,28 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
+        /// <summary>
+        /// Invite for conversation
+        /// </summary>
+        /// <param name="client">The client</param>
+        /// <param name="writer">The writer</param>
+        /// <param name="username">The username that the client entered</param>
+        /// <returns>Either true if successfully connected, false if an error occured.</returns>
+        public static async Task<bool> SendConversationMessage(TcpClient client, StreamWriter writer, string message, string conversationId, string userId)
+        {
+            try
+            {
+                //Send info to the server to invite an user for a conversation
+                await writer.WriteLineAsync($"{RequestCode.SendConversationMessage}|{conversationId}|{userId}|{message}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public static async Task ListenForUpdates(TcpClient client, vmMainWindow vm, StreamWriter writer)
         {
             try
@@ -118,7 +140,11 @@ namespace QuickChatter.Client.Helpers
                         }
                         else if (parts[0] == ResponseCode.Connected)
                         {
-                            vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
+                                vm.UserId = parts[2];
+                            });
                             var e = 5;
                         }
                         else if (parts[0] == ResponseCode.ConnectedUser)
@@ -143,7 +169,17 @@ namespace QuickChatter.Client.Helpers
                         {
                             Application.Current.Dispatcher.Invoke(() =>
                             {
+                                vm.ConversationId = parts[1];
                                 vm.CurrentControl = new ucConversation();
+                            });
+                        }
+                        else if (parts[0] == ResponseCode.ReceivedConversationMessage)
+                        {
+                            var convoMessage = JsonConvert.DeserializeObject<ConversationMessage>(parts[1]);
+
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                vm.ConversationMessages.Add(convoMessage);
                             });
                         }
                     }

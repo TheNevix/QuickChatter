@@ -4,6 +4,6 @@
     {
         public DateTime SentOn { get; set; }
         public string Message { get; set; }
-        public ConnectedClient SentBy { get; set; }
+        public User SentBy { get; set; }
     }
 }

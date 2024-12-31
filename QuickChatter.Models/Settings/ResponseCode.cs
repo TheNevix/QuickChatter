@@ -8,5 +8,6 @@
         public static string DisconnectedUser = "DISCONNECTED USER";
         public static string UpdatedUsers = "UPDATED USERS";
         public static string AcceptedInvite = "ACCEPTED INVITE";
+        public static string ReceivedConversationMessage = "RECEIVED MESSAGE";
     }
 }
