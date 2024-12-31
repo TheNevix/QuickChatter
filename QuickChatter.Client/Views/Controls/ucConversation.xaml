@@ -6,9 +6,11 @@
              xmlns:local="clr-namespace:QuickChatter.Client.Views.Controls"
              xmlns:converters="clr-namespace:QuickChatter.Client.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Background="Azure">
+             d:DesignHeight="450" d:DesignWidth="800" Background="#2b2c2e">
     <UserControl.Resources>
         <converters:UsernameToAlignmentConverter x:Key="UsernameToAlignmentConverter" />
+        <converters:UsernameToBackgroundConverter x:Key="UsernameToBackgroundConverter" />
+        <converters:UsernameToForegroundConverter x:Key="UsernameToForegroundConverter" />
     </UserControl.Resources>
     <Grid>
         <!-- Define the row definitions -->
@@ -35,14 +37,21 @@
                     <StackPanel Orientation="Vertical" Margin="5"
                     HorizontalAlignment="{Binding SentBy.Username, Converter={StaticResource UsernameToAlignmentConverter}}">
                         <!-- Chat Bubble -->
-                        <TextBlock Text="{Binding SentBy.Username}" TextWrapping="Wrap" Foreground="Black" HorizontalAlignment="{Binding SentBy.Username, Converter={StaticResource UsernameToAlignmentConverter}}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{Binding SentBy.Username, Converter={StaticResource UsernameToBackgroundConverter}}" HorizontalAlignment="{Binding SentBy.Username, Converter={StaticResource UsernameToAlignmentConverter}}" Margin="0, 0, 0, 5">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} ({1:HH:mm})">
+                                    <Binding Path="SentBy.Username" />
+                                    <Binding Path="SentOn" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                         <Border 
-                Background="LightGray" 
-                CornerRadius="15" 
-                Padding="10" 
-                MaxWidth="300"
-                HorizontalAlignment="Stretch">
-                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="Black" />
+                            Background="{Binding SentBy.Username, Converter={StaticResource UsernameToBackgroundConverter}}"
+                            CornerRadius="15" 
+                            Padding="10" 
+                            MaxWidth="500"
+                            HorizontalAlignment="Stretch">
+                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{Binding SentBy.Username, Converter={StaticResource UsernameToForegroundConverter}}" />
                         </Border>
                     </StackPanel>
                 </DataTemplate>

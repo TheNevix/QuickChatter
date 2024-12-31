@@ -107,7 +107,7 @@ namespace QuickChatter.Client.ViewModels
                 {
                     new ConversationMessage
                     {
-                        Message = "Test 1",
+                        Message = "Test 1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                         SentBy = new ConnectedClient
                         {
                             Client = null,
