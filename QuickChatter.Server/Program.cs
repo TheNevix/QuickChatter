@@ -70,6 +70,10 @@ class Program
                 {
                     HandleConversationMessage(client, parts);
                 }
+                else if (parts[0] == RequestCode.EndConversation)
+                {
+                    HandleEndConversation(client, parts);
+                }
             }
         }
         catch (Exception ex)
@@ -181,6 +185,40 @@ class Program
 
         //Send the received message to the other client
         Broadcaster.SendConversationMessage(receiver, convoMessage);
+    }
+
+    public static async Task HandleEndConversation(TcpClient client, string[] parts)
+    {
+        //Get the conversation index
+        var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
+
+        ConnectedClient clientToNotify = new ConnectedClient();
+        ConnectedClient clientRequestedToEnd = new ConnectedClient();
+
+        if (ClientConversations[conversationIndex].Accepter.Id.ToString() == parts[2])
+        {
+            clientToNotify = ClientConversations[conversationIndex].Inviter;
+            clientRequestedToEnd = ClientConversations[conversationIndex].Accepter;
+        }
+        else
+        {
+            clientToNotify = ClientConversations[conversationIndex].Accepter;
+            clientRequestedToEnd = ClientConversations[conversationIndex].Inviter;
+        }
+
+        //To the other client that the other one ended the conversation
+        Broadcaster.SendEndConversation(clientToNotify, clientRequestedToEnd.Username);
+
+        //Remove the conversation from the list
+        ClientConversations.RemoveAt(conversationIndex);
+
+        var clientToNotifyIndex = ConnectedClients.FindIndex(cc => cc.Id == clientToNotify.Id);
+        var clientRequestedToEndIndex = ConnectedClients.FindIndex(cc => cc.Id == clientRequestedToEnd.Id);
+
+        ConnectedClients[clientToNotifyIndex].IsAvailable = true;
+        ConnectedClients[clientRequestedToEndIndex].IsAvailable = true;
+
+        Broadcaster.SendUpdatedClients(ConnectedClients, new List<ConnectedClient> { ConnectedClients[clientToNotifyIndex], ConnectedClients[clientRequestedToEndIndex] });
     }
 }
 

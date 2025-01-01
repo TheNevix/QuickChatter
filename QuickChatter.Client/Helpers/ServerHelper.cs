@@ -112,6 +112,28 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
+        /// <summary>
+        /// Invite for conversation
+        /// </summary>
+        /// <param name="client">The client</param>
+        /// <param name="writer">The writer</param>
+        /// <param name="username">The username that the client entered</param>
+        /// <returns>Either true if successfully connected, false if an error occured.</returns>
+        public static async Task<bool> EndConversation(TcpClient client, StreamWriter writer, string conversationId, string userId)
+        {
+            try
+            {
+                //Send info to the server to invite an user for a conversation
+                await writer.WriteLineAsync($"{RequestCode.EndConversation}|{conversationId}|{userId}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public static async Task ListenForUpdates(TcpClient client, vmMainWindow vm, StreamWriter writer)
         {
             try
@@ -180,6 +202,18 @@ namespace QuickChatter.Client.Helpers
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 vm.ConversationMessages.Add(convoMessage);
+                            });
+                        }
+                        else if (parts[0] == ResponseCode.ConversationEnded)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                vm.CurrentControl = new ucMainScreen();
+                            });
+
+                            Task.Run(() =>
+                            {
+                                MessageBox.Show(parts[1]);
                             });
                         }
                     }

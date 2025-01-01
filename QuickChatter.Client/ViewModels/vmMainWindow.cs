@@ -96,6 +96,8 @@ namespace QuickChatter.Client.ViewModels
 
         //Send conversation message
         public ICommand SendConversationMessageCommand { get; }
+        //Back to menu/End conversation
+        public ICommand BackToMenuCommand { get; }
 
         //Constructor
         public vmMainWindow()
@@ -103,6 +105,7 @@ namespace QuickChatter.Client.ViewModels
             ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick);
             InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
             SendConversationMessageCommand = new RelayCommand(SendConversationMessage, CanButtonClick);
+            BackToMenuCommand = new RelayCommand(BackToMenu, CanButtonClick);
             ConversationMessages = new ObservableCollection<ConversationMessage>();
 
             CurrentControl = new ucConnect();
@@ -146,6 +149,14 @@ namespace QuickChatter.Client.ViewModels
 
             //Show a popup to current client with information
             MessageBox.Show($"Waiting for {_selectedUser.Username} to accept the invite");
+        }
+
+        private async void BackToMenu(object sender)
+        {
+            //Send to the server a message that we want to chat with the selected user
+            ServerHelper.EndConversation(_client, _writer, ConversationId, UserId);
+
+            CurrentControl = new ucMainScreen();
         }
 
         private async void SendConversationMessage(object sender)
