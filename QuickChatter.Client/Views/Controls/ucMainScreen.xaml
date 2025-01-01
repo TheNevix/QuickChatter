@@ -24,10 +24,7 @@
                             <Ellipse Width="10" Height="10" Margin="0,0,10,0" Fill="{Binding IsAvailable, Converter={StaticResource BoolToBrushConverter}}" />
 
                             <!-- IP and Username -->
-                            <TextBlock Text="{Binding Ip}" FontWeight="Bold" Margin="0,0,10,0" Foreground="#d8dde6" />
-                            <TextBlock Text=" (" Foreground="Gray" />
-                            <TextBlock Text="{Binding Username}" Foreground="Gray" />
-                            <TextBlock Text=")" Foreground="Gray" />
+                            <TextBlock Text="{Binding Username}" Foreground="White" FontWeight="Bold" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -64,11 +61,73 @@
             <StackPanel HorizontalAlignment="Center" Margin="0,50, 0, 0" Visibility="{Binding SelectedUser, Converter={StaticResource NullToVisibilityConverter}}">
                 <TextBlock FontSize="12" FontWeight="Bold" Margin="0,200,0,10" Foreground="#d8dde6" TextAlignment="Center" >
                     You selected
-                    <Run Text="{Binding SelectedUser.Username}" Foreground="Green" />.
+                    <Run Text="{Binding SelectedUser.Username}" Foreground="#eb6134" />.
                     <LineBreak />
-                    This user if currently available
+                    This user is currently available.
                 </TextBlock>
-                <Button Content="Invite for conversation" Command="{Binding InviteForConversationCommand}" Visibility="{Binding SelectedUser.IsAvailable, Converter={StaticResource BoolToVisibilityConverter}}"></Button>
+                <Button Content="Invite for conversation" Command="{Binding InviteForConversationCommand}" Height="25" Visibility="{Binding SelectedUser.IsAvailable, Converter={StaticResource BoolToVisibilityConverter}}" Background="Transparent" BorderBrush="#eb6134" Foreground="White">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <!-- Border with animation -->
+                                <Border x:Name="border"
+                                    Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="10" />
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <!-- Animate the background color -->
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                    To="Red" Duration="0:0:0.3" />          
+                                                <!-- Animate the border color -->
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                    To="#eb6134" Duration="0:0:0.3" />          
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <!-- Animate the background back to default -->
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                    To="Transparent" Duration="0:0:0.3" />      
+                                                <!-- Animate the border back to default -->
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                    To="#eb6134" Duration="0:0:0.3" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <!-- Animate the pressed state -->
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                    To="#eb6134" Duration="0:0:0.2" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                    Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                    To="#eb6134" Duration="0:0:0.2" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+
+                </Button>
 
             </StackPanel>
         </Grid>
