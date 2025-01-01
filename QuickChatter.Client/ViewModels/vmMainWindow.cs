@@ -166,7 +166,7 @@ namespace QuickChatter.Client.ViewModels
                 //Send to the server a message that we want to chat with the selected user
                 ServerHelper.SendConversationMessage(_client, _writer, _message, ConversationId, UserId);
 
-                _message = string.Empty;
+                ConvoMessage = string.Empty;
             }
         }
 

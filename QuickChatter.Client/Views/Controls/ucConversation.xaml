@@ -15,13 +15,88 @@
     <Grid>
         <!-- Define the row definitions -->
         <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
             <!-- First row adjusts to its content -->
-            <RowDefinition Height="100" />
+            <RowDefinition Height="60" />
             <!-- Second row takes the remaining space -->
         </Grid.RowDefinitions>
 
-        <ListBox ItemsSource="{Binding ConversationMessages}" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch">
+        <Grid Grid.Row="0">
+            <!-- Define one column spanning the entire width -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Button aligned to the left -->
+            <Button HorizontalAlignment="Left" Content="&lt;- back to menu" Foreground="White" Width="100" Height="30" Background="Transparent" BorderThickness="1" BorderBrush="#eb6134" Margin="2,2,0,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <!-- Border with animation -->
+                            <Border x:Name="border"
+                        Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}" 
+                        CornerRadius="10" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <!-- Animate the background color -->
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                To="Red" Duration="0:0:0.3" />
+                                            <!-- Animate the border color -->
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                To="#eb6134" Duration="0:0:0.3" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <!-- Animate the background back to default -->
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                To="Transparent" Duration="0:0:0.3" />
+                                            <!-- Animate the border back to default -->
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                To="#eb6134" Duration="0:0:0.3" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <!-- Animate the pressed state -->
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                To="#eb6134" Duration="0:0:0.2" />
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                To="#eb6134" Duration="0:0:0.2" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <!-- TextBlock centered on the screen -->
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Conversation with Pinokkio" FontSize="15" Foreground="White" />
+        </Grid>
+
+
+        <ListBox ItemsSource="{Binding ConversationMessages}" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch" Grid.Row="1">
             <ListBox.Resources>
                 <!-- Remove ListBoxItem's hover and selection behavior -->
                 <Style TargetType="ListBoxItem">
@@ -58,13 +133,44 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <TextBox HorizontalAlignment="Left" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="{Binding ConvoMessage}" VerticalAlignment="Center" Width="445" Height="80"/>
-        <Button Command="{Binding SendConversationMessageCommand}" Content="Send" HorizontalAlignment="Left" Margin="460,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="80" Width="130"/>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <!-- Second row content -->
+            <TextBox HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="White" TextWrapping="Wrap" Text="{Binding ConvoMessage}" VerticalAlignment="Center" Width="700" Height="40" Background="Transparent" BorderBrush="#eb6134">
+                <TextBox.Template>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <Border x:Name="border"
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4" />
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                Margin="4"
+                                Focusable="False" 
+                                VerticalScrollBarVisibility="Hidden" 
+                                HorizontalScrollBarVisibility="Hidden" />
+                        </Grid>
+                    </ControlTemplate>
+                </TextBox.Template>
 
+            </TextBox>
+            <Button Command="{Binding SendConversationMessageCommand}" Grid.Column="1" FontFamily="Segoe MDL2 Assets" Content="&#xE122;" Cursor="Hand" FontSize="35" Foreground="#eb6134" Width="40" Height="40" Background="Transparent" BorderThickness="0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                    BorderBrush="{TemplateBinding BorderBrush}" 
+                    BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
 
-
+        </Grid>
 
     </Grid>
 </UserControl>
