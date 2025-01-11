@@ -92,7 +92,11 @@
                 </Button.Template>
             </Button>
             <!-- TextBlock centered on the screen -->
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Conversation with Pinokkio" FontSize="15" Foreground="White" />
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Foreground="White">
+                <TextBlock.Text>
+                    <Binding Path="SelectedUser.Username" StringFormat="Conversation with {0}" />
+                </TextBlock.Text>
+            </TextBlock>
         </Grid>
 
 

@@ -192,6 +192,7 @@ namespace QuickChatter.Client.Helpers
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 vm.ConversationId = parts[1];
+                                vm.SelectedUser.Username = parts[2];
                                 vm.CurrentControl = new ucConversation();
                             });
                         }

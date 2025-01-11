@@ -109,6 +109,7 @@ namespace QuickChatter.Client.ViewModels
             ConversationMessages = new ObservableCollection<ConversationMessage>();
 
             CurrentControl = new ucConnect();
+            SelectedUser = new User();
 
             Username = "eg. TheLegend27";
         }

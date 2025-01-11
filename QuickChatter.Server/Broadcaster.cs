@@ -121,16 +121,21 @@ namespace QuickChatter.Server
         /// <param name="requestingClient">The client requesting the info</param>
         public static async void SendConversationInviteAccepted(Conversation conversation)
         {
-            //Send a message to the accepting client
-            string message = $"{ResponseCode.AcceptedInvite}|{conversation.Id.ToString()}";
-
-            //Encode
-            byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
-
             //Send
             if (conversation.Inviter.Client.Connected && conversation.Accepter.Client.Connected)
             {
+                //Send a message to the accepting client
+                string message = $"{ResponseCode.AcceptedInvite}|{conversation.Id.ToString()}|{conversation.Accepter.Username}";
+
+                //Encode
+                byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
                 conversation.Inviter.Client.GetStream().WriteAsync(data, 0, data.Length);
+
+                message = $"{ResponseCode.AcceptedInvite}|{conversation.Id.ToString()}|{conversation.Inviter.Username}";
+
+                data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
                 conversation.Accepter.Client.GetStream().WriteAsync(data, 0, data.Length);
             }
         }
