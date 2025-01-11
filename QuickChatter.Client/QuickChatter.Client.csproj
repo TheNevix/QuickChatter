@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+	<PublishSingleFile>true</PublishSingleFile>
+	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	<!-- Adjust for your target platform -->
+	<SelfContained>true</SelfContained>
+	<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -102,7 +102,7 @@
         </Grid>
 
 
-        <ListBox ItemsSource="{Binding ConversationMessages}" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch" Grid.Row="1">
+        <ListBox behaviors:ListBoxAutoScrollBehavior.AutoScroll="True" ItemsSource="{Binding ConversationMessages}" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch" Grid.Row="1">
             <ListBox.Resources>
                 <!-- Remove ListBoxItem's hover and selection behavior -->
                 <Style TargetType="ListBoxItem">
