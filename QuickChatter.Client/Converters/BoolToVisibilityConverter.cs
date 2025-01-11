@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using QuickChatter.Models;
+using QuickChatter.Models.Settings;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows;
-using System.Diagnostics;
+using System.Windows.Data;
 
 namespace QuickChatter.Client.Converters
 {
@@ -14,10 +10,23 @@ namespace QuickChatter.Client.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            Debug.WriteLine($"Converter Input: {value}");
-            if (value is bool boolValue)
+            //Check if value is not null
+            if (value is not null)
             {
-                return boolValue ? Visibility.Visible : Visibility.Collapsed;
+                //Convert it into an user object
+                var user = value as User;
+
+                //Check if the user selected himself
+                if (user.Username == UserSettings.Username)
+                {
+                    //If so, hide (invite button)
+                    return Visibility.Collapsed;
+                }
+
+                if (user.IsAvailable is bool boolValue)
+                {
+                    return boolValue ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
 
             return DependencyProperty.UnsetValue;

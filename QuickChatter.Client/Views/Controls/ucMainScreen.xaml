@@ -63,9 +63,8 @@
                     You selected
                     <Run Text="{Binding SelectedUser.Username}" Foreground="#eb6134" />.
                     <LineBreak />
-                    This user is currently available.
                 </TextBlock>
-                <Button Content="Invite for conversation" Command="{Binding InviteForConversationCommand}" Height="25" Visibility="{Binding SelectedUser.IsAvailable, Converter={StaticResource BoolToVisibilityConverter}}" Background="Transparent" BorderBrush="#eb6134" Foreground="White">
+                <Button Content="Invite for conversation" Command="{Binding InviteForConversationCommand}" Height="25" Visibility="{Binding SelectedUser, Converter={StaticResource BoolToVisibilityConverter}}" Background="Transparent" BorderBrush="#eb6134" Foreground="White">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Grid>
