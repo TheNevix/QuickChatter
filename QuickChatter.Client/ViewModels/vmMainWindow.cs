@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace QuickChatter.Client.ViewModels
@@ -99,6 +100,8 @@ namespace QuickChatter.Client.ViewModels
         //Back to menu/End conversation
         public ICommand BackToMenuCommand { get; }
 
+        public ICommand KeyDownCommand { get; }
+
         //Constructor
         public vmMainWindow()
         {
@@ -106,6 +109,8 @@ namespace QuickChatter.Client.ViewModels
             InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
             SendConversationMessageCommand = new RelayCommand(SendConversationMessage, CanButtonClick);
             BackToMenuCommand = new RelayCommand(BackToMenu, CanButtonClick);
+            KeyDownCommand = new RelayCommand<KeyEventArgs>(HandleKeyDown, CanButtonClick);
+
             ConversationMessages = new ObservableCollection<ConversationMessage>();
 
             CurrentControl = new ucConnect();
@@ -140,6 +145,17 @@ namespace QuickChatter.Client.ViewModels
 
                 //Navigate to the main screen
                 CurrentControl = new ucMainScreen();
+            }
+        }
+
+        private void HandleKeyDown(KeyEventArgs e)
+        {
+            if (e.Source is TextBox textBox)
+            {
+                if (e.Key == Key.Enter)
+                {
+                    SendConversationMessage(null);
+                }
             }
         }
 
