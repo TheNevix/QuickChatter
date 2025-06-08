@@ -46,6 +46,30 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
+        public static async Task<bool> Disconnect(TcpClient client, StreamWriter writer)
+        {
+            try
+            {
+                //Get the Ip of the client
+                string userIp = IpHelpers.GetLocalIPAddress();
+
+                //Check if null
+                if (string.IsNullOrEmpty(userIp))
+                {
+                    return false;
+                }
+
+                //Connect to the server
+                await writer.WriteLineAsync($"{RequestCode.Disconnect}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         /// Invite for conversation
         /// </summary>
@@ -166,6 +190,19 @@ namespace QuickChatter.Client.Helpers
                             {
                                 vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
                                 vm.UserId = parts[2];
+                            });
+                            var e = 5;
+                        }
+                        else if (parts[0] == ResponseCode.DisonnectedUser)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                var id = Guid.Parse(parts[1]);
+                                var userToRemove = vm.OnlineUsers.FirstOrDefault(x => x.Id == id);
+                                if (userToRemove != null)
+                                {
+                                    vm.OnlineUsers.Remove(userToRemove);
+                                }
                             });
                             var e = 5;
                         }

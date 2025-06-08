@@ -102,6 +102,26 @@ namespace QuickChatter.Server
         /// </summary>
         /// <param name="connectedClients">A list of connected clients</param>
         /// <param name="requestingClient">The client requesting the info</param>
+        public static async void SendDisconnected(List<ConnectedClient> connectedClients, Guid id)
+        {
+            //Create the message
+            string message = $"{ResponseCode.DisonnectedUser}|{id}";
+
+            //Encode
+            byte[] data = Encoding.UTF8.GetBytes(message + Environment.NewLine);
+
+            ////Send
+            foreach (var client in connectedClients)
+            {
+                client.Client.GetStream().WriteAsync(data, 0, data.Length);
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts a list of connected clients to a requesting client
+        /// </summary>
+        /// <param name="connectedClients">A list of connected clients</param>
+        /// <param name="requestingClient">The client requesting the info</param>
         public static async void SendConversationInvite(ConnectedClient accepter, ConnectedClient inviter, string conversationId)
         {
             //Send a message to the accepting client

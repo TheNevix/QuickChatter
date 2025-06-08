@@ -6,8 +6,54 @@
         xmlns:local="clr-namespace:QuickChatter.Client.Views"
         xmlns:localControls="clr-namespace:QuickChatter.Client.Views.Controls"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        WindowStyle="None"
+        Title="QuickChatter" Height="450" Width="800">
     <Grid>
-        <ContentControl x:Name="MainContentControl" Content="{Binding CurrentControl}" />
+        <!-- Custom Title Bar -->
+        <!-- Custom Title Bar -->
+        <Border Background="#FF2D2D30"
+            Height="30"
+            VerticalAlignment="Top"
+            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- App Icon -->
+                <!--<Image Source="/Assets/appicon.ico"
+                   Width="16"
+                   Height="16"
+                   Margin="5"
+                   VerticalAlignment="Center"/>-->
+
+                <!-- Title -->
+                <TextBlock Text="QuickChatter"
+                       Foreground="White"
+                       VerticalAlignment="Center"
+                       Margin="5,0,0,0"
+                       Grid.Column="1"/>
+
+                <!-- Window Buttons -->
+                <StackPanel Orientation="Horizontal"
+                        Grid.Column="2"
+                        VerticalAlignment="Center">
+                    <Button Content="—"
+                        Width="40"
+                        Command="{Binding MinimizeCommand}"/>
+                    <Button Content="☐"
+                        Width="40"
+                        Command="{Binding MaximizeRestoreCommand}"/>
+                    <Button Content="X"
+                        Width="40"
+                        Background="Red"
+                        Foreground="White"
+                        Command="{Binding CloseCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <ContentControl x:Name="MainContentControl" Content="{Binding CurrentControl}" Margin="0,30,0,0" />
     </Grid>
 </Window>

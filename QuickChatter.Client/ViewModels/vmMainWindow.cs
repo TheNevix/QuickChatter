@@ -14,8 +14,15 @@ namespace QuickChatter.Client.ViewModels
 {
     public class vmMainWindow : vmBase
     {
+        public ICommand MinimizeCommand { get; }
+        public ICommand MaximizeRestoreCommand { get; }
+        public ICommand CloseCommand { get; }
+
         private TcpClient _client;
         private StreamWriter _writer;
+
+        //Indicates if the user is connected or not
+        private bool IsConnected => _client?.Connected == true && _writer != null;
 
         //Holds the current UserControl
         private object _currentControl;
@@ -102,8 +109,10 @@ namespace QuickChatter.Client.ViewModels
 
         public ICommand KeyDownCommand { get; }
 
+        private readonly Window _window;
+
         //Constructor
-        public vmMainWindow()
+        public vmMainWindow(Window window)
         {
             ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick);
             InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
@@ -116,6 +125,34 @@ namespace QuickChatter.Client.ViewModels
             CurrentControl = new ucConnect();
 
             Username = "v1.0.0";
+
+            _window = window;
+
+            MinimizeCommand = new RelayCommand(_ => _window.WindowState = WindowState.Minimized);
+            MaximizeRestoreCommand = new RelayCommand(_ =>
+            {
+                _window.WindowState = _window.WindowState == WindowState.Normal
+                    ? WindowState.Maximized
+                    : WindowState.Normal;
+            });
+            CloseCommand = new RelayCommand(_ =>
+            {
+                var result = MessageBox.Show(
+                    "Are you sure you want to exit?",
+                    "Confirm Exit",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (IsConnected)
+                    {
+                        Disconnect(null); // send disconnect message only if actually connected
+                    }
+                    _window.Close();
+                }
+            });
+
         }
 
         /// <summary>
@@ -124,26 +161,34 @@ namespace QuickChatter.Client.ViewModels
         /// <param name="sender"></param>
         private async void ConnectToServer(object sender)
         {
-            UserSettings.Username = Username;
-            _client = new TcpClient("127.0.0.1", 5000);
-            _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
-
-            //Connect with the server
-            var isConnected = await ServerHelper.ConnectToServer(_client, _writer, Username);
-
-            //If failed
-            if (!isConnected)
+            try
             {
-                //Show the client
-                MessageBox.Show("Something went wrong while connecting to the server.");
+                UserSettings.Username = Username;
+                _client = new TcpClient("127.0.0.1", 5000);
+                _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+
+                //Connect with the server
+                var isConnected = await ServerHelper.ConnectToServer(_client, _writer, Username);
+
+                //If failed
+                if (!isConnected)
+                {
+                    //Show the client
+                    MessageBox.Show("Something went wrong while connecting to the server.");
+                }
+                else
+                {
+                    //Listen for updates
+                    ServerHelper.ListenForUpdates(_client, this, _writer);
+
+                    //Navigate to the main screen
+                    CurrentControl = new ucMainScreen();
+                }
             }
-            else
+            catch (Exception)
             {
-                //Listen for updates
-                ServerHelper.ListenForUpdates(_client, this, _writer);
-
-                //Navigate to the main screen
-                CurrentControl = new ucMainScreen();
+                //Show a message box instead of crashing
+                MessageBox.Show("Something went wrong while connecting to the server.");
             }
         }
 
@@ -156,6 +201,12 @@ namespace QuickChatter.Client.ViewModels
                     SendConversationMessage(null);
                 }
             }
+        }
+
+        private async void Disconnect(object sender)
+        {
+            //Send to the server a message that we want to chat with the selected user
+            ServerHelper.Disconnect(_client, _writer);
         }
 
         private async void InviteForConversation(object sender)

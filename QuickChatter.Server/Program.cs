@@ -58,6 +58,12 @@ class Program
                     //Handle Connect
                     HandleConnect(client, parts);
                 }
+                else if (parts[0] == RequestCode.Disconnect)
+                {
+                    //Handle Connect
+                    HandleDisconnect(client, parts);
+                    break;
+                }
                 else if (parts[0] == RequestCode.InviteForConversation)
                 {
                     HandleInvite(client, parts);
@@ -109,6 +115,42 @@ class Program
 
         //Send new added user to everyone
         Broadcaster.SendNewOnlineUser(ConnectedClients, ConnectedClients[foundClientIndex]);
+    }
+
+    public static async Task HandleDisconnect(TcpClient client, string[] parts)
+    {
+        // Find the client to remove
+        var clientToRemove = ConnectedClients.FirstOrDefault(cc => cc.Client == client);
+        if (clientToRemove == null)
+            return;
+
+        // Remove the client from the list
+        ConnectedClients.Remove(clientToRemove);
+
+        // Notify all remaining clients that this user went offline
+        Broadcaster.SendDisconnected(ConnectedClients, clientToRemove.Id);
+
+        // Optionally, close the connection
+        try
+        {
+            if (client != null && client.Client != null && client.Connected)
+            {
+                client.GetStream()?.Close(); // Optional: close the stream explicitly
+                client.Close();
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed, no action needed
+        }
+        catch (Exception ex)
+        {
+            // Log unexpected exceptions if needed
+            Console.WriteLine($"Error while closing client: {ex.Message}");
+        }
+
+        // Log or debug
+        Console.WriteLine($"Client {clientToRemove.Username} ({clientToRemove.Ip}) disconnected.");
     }
 
     public static async Task HandleInvite(TcpClient client, string[] parts)

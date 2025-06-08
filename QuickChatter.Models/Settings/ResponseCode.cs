@@ -3,9 +3,9 @@
     public static class ResponseCode
     {
         public static string Connected = "CONNECTED";
+        public static string DisonnectedUser = "DISCONNECTEDUSER";
         public static string InviteReceived = "INVITE RECEIVED";
         public static string ConnectedUser = "CONNECTED USER";
-        public static string DisconnectedUser = "DISCONNECTED USER";
         public static string UpdatedUsers = "UPDATED USERS";
         public static string AcceptedInvite = "ACCEPTED INVITE";
         public static string ReceivedConversationMessage = "RECEIVED MESSAGE";
