@@ -115,7 +115,7 @@ namespace QuickChatter.Client.ViewModels
 
             CurrentControl = new ucConnect();
 
-            Username = "eg. TheLegend27";
+            Username = "v1.0.0";
         }
 
         /// <summary>
