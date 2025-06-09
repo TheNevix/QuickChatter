@@ -1,4 +1,5 @@
 ﻿using QuickChatter.Client.ViewModels;
+using QuickChatter.Client.Views.Controls;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -41,5 +42,24 @@ namespace QuickChatter.Client.Views
             if (e.ButtonState == MouseButtonState.Pressed)
                 DragMove();
         }
+
+        public Task<bool> ShowMessageBox(string title, string message)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            var msgBox = new ucMessageBox(title, message);
+            msgBox.OnClose += result =>
+            {
+                DialogHost.Visibility = Visibility.Collapsed;
+                DialogHost.Content = null;
+                tcs.SetResult(result);
+            };
+
+            DialogHost.Content = msgBox;
+            DialogHost.Visibility = Visibility.Visible;
+
+            return tcs.Task;
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using QuickChatter.Client.Helpers;
+using QuickChatter.Client.Views;
 using QuickChatter.Client.Views.Controls;
 using QuickChatter.Models;
 using QuickChatter.Models.Settings;
@@ -135,15 +136,11 @@ namespace QuickChatter.Client.ViewModels
                     ? WindowState.Maximized
                     : WindowState.Normal;
             });
-            CloseCommand = new RelayCommand(_ =>
+            CloseCommand = new RelayCommand(async _ =>
             {
-                var result = MessageBox.Show(
-                    "Are you sure you want to exit?",
-                    "Confirm Exit",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                var result = await ((MainWindow)_window).ShowMessageBox("Exit", "Are you sure you want to exit?");
 
-                if (result == MessageBoxResult.Yes)
+                if (result)
                 {
                     if (IsConnected)
                     {
