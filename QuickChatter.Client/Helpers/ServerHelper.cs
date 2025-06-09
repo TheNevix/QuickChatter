@@ -22,23 +22,45 @@ namespace QuickChatter.Client.Helpers
         /// <param name="writer">The writer</param>
         /// <param name="username">The username that the client entered</param>
         /// <returns>Either true if successfully connected, false if an error occured.</returns>
-        public static async Task<bool> ConnectToServer(TcpClient client, StreamWriter writer, string username)
+        public static async Task<bool> ConnectToServer(TcpClient client, StreamWriter writer, string username, string password)
         {
             try
             {
-                //Get the Ip of the client
-                string userIp = IpHelpers.GetLocalIPAddress();
+                //Connect to the server
+                await writer.WriteLineAsync($"{RequestCode.Connect}|{username}|{password}");
 
-                //Check if null
-                if (string.IsNullOrEmpty(userIp))
+                var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+                string? response = await reader.ReadLineAsync();
+
+                if (response == "LOGIN_SUCCESS")
                 {
-                    return false;
+                    return true;
                 }
 
-                //Connect to the server
-                await writer.WriteLineAsync($"{RequestCode.Connect}|{username}|{userIp}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
 
-                return true;
+        public static async Task<bool> RegisterToServer(TcpClient client, StreamWriter writer, string username, string password)
+        {
+            try
+            {
+                //Register to the server
+                await writer.WriteLineAsync($"{RequestCode.Register}|{username}|{password}");
+
+                var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+                string? response = await reader.ReadLineAsync();
+
+                if (response == "REGISTER_SUCCESS")
+                {
+                    return true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {

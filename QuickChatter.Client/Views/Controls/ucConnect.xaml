@@ -1,108 +1,238 @@
 ﻿<UserControl x:Class="QuickChatter.Client.Views.Controls.ucConnect"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:QuickChatter.Client.Views.Controls"
-             mc:Ignorable="d" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid Background="#2b2c2e">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <!-- Welcome message row takes available space -->
-            <RowDefinition Height="*" />
-            <!-- StackPanel row takes available space and centers content -->
         </Grid.RowDefinitions>
 
-        <!-- Welcome message -->
-        <TextBlock Grid.Row="0" Text="Welcome to QuickChatter!" Foreground="White" FontSize="45" 
-               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 25, 0, 0" />
+        <!-- Title -->
+        <TextBlock Text="Welcome to QuickChatter!" 
+                   Foreground="White" 
+                   FontSize="40" 
+                   HorizontalAlignment="Center" 
+                   Margin="0,10,0,30"
+                   Grid.Row="0"/>
 
-        <!-- StackPanel items in the middle -->
-        <StackPanel Grid.Row="1" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Center">
-            <Label Content="Enter your username" Foreground="#d8dde6" Margin="-4"/>
-            <TextBox TextWrapping="Wrap" Text="{Binding Username}" Width="400" Margin="0, 4, 0, 10" Background="Transparent" BorderBrush="#eb6134" Foreground="White" CaretBrush="White">
-                <TextBox.Template>
-                    <ControlTemplate TargetType="TextBox">
-                        <Grid>
-                            <Border x:Name="border"
-                                Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="4" />
-                                            <ScrollViewer x:Name="PART_ContentHost" 
-                                Margin="4"
-                                Focusable="False" 
-                                VerticalScrollBarVisibility="Hidden" 
-                                HorizontalScrollBarVisibility="Hidden" />
-                        </Grid>
-                    </ControlTemplate>
-                </TextBox.Template>
-            </TextBox>
-            <Button Content="Connect" Command="{Binding ConnectCommand}" Width="400" Height="25" Margin="0, 25, 0, 0" Foreground="White" Cursor="Hand" Background="Transparent" BorderBrush="#eb6134">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <!-- Border with animation -->
-                            <Border x:Name="border"
-        Background="{TemplateBinding Background}" 
-        BorderBrush="{TemplateBinding BorderBrush}" 
-        BorderThickness="{TemplateBinding BorderThickness}" 
-        CornerRadius="10" />
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <!-- Animate the background color -->
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
-                                To="Red" Duration="0:0:0.3" />
-                                            <!-- Animate the border color -->
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                                To="#eb6134" Duration="0:0:0.3" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <!-- Animate the background back to default -->
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
-                                To="Transparent" Duration="0:0:0.3" />
-                                            <!-- Animate the border back to default -->
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                                To="#eb6134" Duration="0:0:0.3" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <!-- Animate the pressed state -->
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
-                                To="#eb6134" Duration="0:0:0.2" />
-                                            <ColorAnimation Storyboard.TargetName="border" 
-                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                                To="#eb6134" Duration="0:0:0.2" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-        </StackPanel>
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
+            <!-- Login Section -->
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <TextBlock Text="Login" FontSize="24" Foreground="White" Margin="0,0,0,20" HorizontalAlignment="Center" />
+                <Label Content="Username" Foreground="#d8dde6" />
+                <TextBox Width="250" Text="{Binding Username}" Background="Transparent" BorderBrush="#eb6134" Foreground="White" CaretBrush="White" Margin="0,4,0,10">
+                    <TextBox.Template>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="4" />
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Margin="4"
+                                              Focusable="False" 
+                                              VerticalScrollBarVisibility="Hidden" 
+                                              HorizontalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </ControlTemplate>
+                    </TextBox.Template>
+                </TextBox>
+                <Label Content="Password" Foreground="#d8dde6" />
+                <TextBox Width="250" Text="{Binding Password}" Background="Transparent" BorderBrush="#eb6134" Foreground="White" CaretBrush="White" Margin="0,4,0,10">
+                    <TextBox.Template>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="4" />
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Margin="4"
+                                              Focusable="False" 
+                                              VerticalScrollBarVisibility="Hidden" 
+                                              HorizontalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </ControlTemplate>
+                    </TextBox.Template>
+                </TextBox>
+                <Button Content="Login" Width="250" Height="30" Command="{Binding ConnectCommand}" Foreground="White" Background="Transparent" BorderBrush="#eb6134" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="10" />
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="Red" Duration="0:0:0.3" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.3" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="Transparent" Duration="0:0:0.3" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.3" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.2" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.2" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
 
+            <!-- Separator with "Or" text -->
+            <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top" >
+                <!-- Top line -->
+                <Border Background="#444" Width="2" Height="40"/>
+
+                <!-- Bottom line -->
+                <Border Background="#444" Width="2" Height="200"/>
+            </StackPanel>
+
+            <!-- Register Section -->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <TextBlock Text="Register" FontSize="24" Foreground="White" Margin="0,0,0,20" HorizontalAlignment="Center" />
+                <Label Content="Username" Foreground="#d8dde6" />
+                <TextBox Width="250" Text="{Binding RegisterUsername}" Background="Transparent" BorderBrush="#eb6134" Foreground="White" CaretBrush="White" Margin="0,4,0,10">
+                    <TextBox.Template>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="4" />
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Margin="4"
+                                              Focusable="False" 
+                                              VerticalScrollBarVisibility="Hidden" 
+                                              HorizontalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </ControlTemplate>
+                    </TextBox.Template>
+                </TextBox>
+                <Label Content="Password" Foreground="#d8dde6" />
+                <TextBox Width="250" Text="{Binding RegisterPassword}" Background="Transparent" BorderBrush="#eb6134" Foreground="White" CaretBrush="White" Margin="0,4,0,10">
+                    <TextBox.Template>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="4" />
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Margin="4"
+                                              Focusable="False" 
+                                              VerticalScrollBarVisibility="Hidden" 
+                                              HorizontalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </ControlTemplate>
+                    </TextBox.Template>
+                </TextBox>
+                <Button Content="Register" Width="250" Height="30" Command="{Binding RegisterCommand}" Foreground="White" Background="Transparent" BorderBrush="#eb6134" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Border x:Name="border"
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        CornerRadius="10" />
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="Red" Duration="0:0:0.3" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.3" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="Transparent" Duration="0:0:0.3" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.3" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.2" />
+                                                <ColorAnimation Storyboard.TargetName="border" 
+                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
+                                                                To="#eb6134" Duration="0:0:0.2" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

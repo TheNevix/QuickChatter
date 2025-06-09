@@ -1,6 +1,9 @@
 ﻿using QuickChatter.Models;
+using  DomainUser = QuickChatter.Models.Domain;
 using QuickChatter.Models.Settings;
 using QuickChatter.Server;
+using QuickChatter.Server.Repositories;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -10,6 +13,7 @@ class Program
     //List of connected clients
     private static List<ConnectedClient> ConnectedClients = new List<ConnectedClient>();
     private static List<Conversation> ClientConversations = new List<Conversation>();
+    private static readonly UserRepository _repo = new UserRepository("users.db");
 
     static async Task Main(string[] args)
     {
@@ -37,6 +41,89 @@ class Program
         {
             using NetworkStream stream = client.GetStream();
             using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+            using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+
+            // STEP 1: Wait for login
+
+            string receivedMessage = await reader.ReadLineAsync();
+
+            if (string.IsNullOrWhiteSpace(receivedMessage))
+            {
+                Console.WriteLine("Client disconnected: Invalid login format.");
+                client.Close();
+                return;
+            }
+
+            bool isLoginMessage = receivedMessage.StartsWith(RequestCode.Connect);
+            bool isRegisterMessage = receivedMessage.StartsWith(RequestCode.Register);
+
+            if (isLoginMessage)
+            {
+                var loginParts = receivedMessage.Split('|');
+                if (loginParts.Length != 3)
+                {
+                    await writer.WriteLineAsync("LOGIN_FAIL|Malformed login message");
+                    Console.WriteLine("Client disconnected: Malformed login message.");
+                    client.Close();
+                    return;
+                }
+
+                string username = loginParts[1];
+                string password = loginParts[2];
+
+                var user = _repo.LoginUser(username, password);
+                if (user == null)
+                {
+                    await writer.WriteLineAsync("LOGIN_FAIL|Invalid credentials");
+                    Console.WriteLine("Client disconnected: Invalid credentials.");
+                    client.Close();
+                    return;
+                }
+
+                await writer.WriteLineAsync("LOGIN_SUCCESS");
+
+                await Task.Delay(100);
+
+                HandleConnect(client, user, loginParts);
+
+                Console.WriteLine("Client succesfully connected.");
+                return;
+            }
+
+            if (isRegisterMessage) 
+            {
+                var registerParts = receivedMessage.Split('|');
+                if (registerParts.Length != 3)
+                {
+                    await writer.WriteLineAsync("REGISTER_FAIL|Malformed register message");
+                    Console.WriteLine("Client disconnected: Malformed register message.");
+                    client.Close();
+                    return;
+                }
+
+                string username = registerParts[1];
+                string password = registerParts[2];
+
+                var isRegistered = _repo.RegisterUser(username, password);
+
+                if (!isRegistered)
+                {
+                    await writer.WriteLineAsync("REGISTER_FAIL|Choose another username");
+                    Console.WriteLine("Client disconnected: username already exists.");
+                    client.Close();
+                    return;
+                }
+
+                await writer.WriteLineAsync("REGISTER_SUCCESS");
+
+                client.Close();
+
+                Console.WriteLine("Client succesfully registered.");
+
+                return;
+            }
+
+
 
             while (true)
             {
@@ -53,12 +140,7 @@ class Program
                 var parts = receivedData.Split('|');
 
                 //Check if we have exactly 2 parts
-                if (parts[0] == RequestCode.Connect)
-                {
-                    //Handle Connect
-                    HandleConnect(client, parts);
-                }
-                else if (parts[0] == RequestCode.Disconnect)
+                if (parts[0] == RequestCode.Disconnect)
                 {
                     //Handle Connect
                     HandleDisconnect(client, parts);
@@ -92,22 +174,18 @@ class Program
         }
     }
 
-    public static async Task HandleConnect(TcpClient client, string[] parts)
+    public static async Task HandleConnect(TcpClient client, DomainUser.User user, string[] parts)
     {
         //Add the new Client
-        ConnectedClients.Add(new ConnectedClient { Id = Guid.NewGuid(), Client = client, IsAvailable = true });
+        ConnectedClients.Add(new ConnectedClient { Id = Guid.Parse(user.Id), Client = client, IsAvailable = true });
 
         //Get the username
         string username = parts[1];
-
-        //Get the ip
-        string ip = parts[2];
 
         //Find the client index in the list of connected clients
         var foundClientIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
 
         //Update their info
-        ConnectedClients[foundClientIndex].Ip = ip;
         ConnectedClients[foundClientIndex].Username = username;
 
         //Send the new client the info of all the connected users

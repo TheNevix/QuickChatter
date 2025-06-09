@@ -43,6 +43,33 @@ namespace QuickChatter.Client.ViewModels
             set => SetProperty(ref _username, value);
         }
 
+        //Password
+        private string _password;
+
+        public string Password
+        {
+            get => _password;
+            set => SetProperty(ref _password, value);
+        }
+
+        //RegisterUsername
+        private string _registerUsername;
+
+        public string RegisterUsername
+        {
+            get => _registerUsername;
+            set => SetProperty(ref _registerUsername, value);
+        }
+
+        //RegisterPassword
+        private string _registerPassword;
+
+        public string RegisterPassword
+        {
+            get => _registerPassword;
+            set => SetProperty(ref _registerPassword, value);
+        }
+
         //Entered Message
         private string _message;
 
@@ -100,6 +127,9 @@ namespace QuickChatter.Client.ViewModels
         //Connect Click Event
         public ICommand ConnectCommand { get; }
 
+        //Register Click Event
+        public ICommand RegisterCommand { get; }
+
         //Invite user for conversation Event
         public ICommand InviteForConversationCommand { get; }
 
@@ -116,6 +146,7 @@ namespace QuickChatter.Client.ViewModels
         public vmMainWindow(Window window)
         {
             ConnectCommand = new RelayCommand(ConnectToServer, CanButtonClick);
+            RegisterCommand = new RelayCommand(RegisterToServer, CanButtonClick);
             InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
             SendConversationMessageCommand = new RelayCommand(SendConversationMessage, CanButtonClick);
             BackToMenuCommand = new RelayCommand(BackToMenu, CanButtonClick);
@@ -165,13 +196,13 @@ namespace QuickChatter.Client.ViewModels
                 _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
 
                 //Connect with the server
-                var isConnected = await ServerHelper.ConnectToServer(_client, _writer, Username);
+                var isConnected = await ServerHelper.ConnectToServer(_client, _writer, Username, Password);
 
                 //If failed
                 if (!isConnected)
                 {
                     //Show the client
-                    MessageBox.Show("Something went wrong while connecting to the server.");
+                    MessageBox.Show("Be sure to enter a valid username and password.");
                 }
                 else
                 {
@@ -180,6 +211,35 @@ namespace QuickChatter.Client.ViewModels
 
                     //Navigate to the main screen
                     CurrentControl = new ucMainScreen();
+                }
+            }
+            catch (Exception)
+            {
+                //Show a message box instead of crashing
+                MessageBox.Show("Something went wrong while connecting to the server.");
+            }
+        }
+
+        private async void RegisterToServer(object sender)
+        {
+            try
+            {
+                UserSettings.Username = Username;
+                _client = new TcpClient("127.0.0.1", 5000);
+                _writer = new StreamWriter(_client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+
+                //Connect with the server
+                var isRegistered = await ServerHelper.RegisterToServer(_client, _writer, RegisterUsername, RegisterPassword);
+
+                //If failed
+                if (!isRegistered)
+                {
+                    //Show the client
+                    MessageBox.Show("Choose another username");
+                }
+                else
+                {
+                    MessageBox.Show("You have been successfully registerd. You can now login.");
                 }
             }
             catch (Exception)
