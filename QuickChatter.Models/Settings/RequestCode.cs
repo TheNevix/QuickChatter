@@ -2,13 +2,13 @@
 {
     public static class RequestCode
     {
-        public static string Connect = "CONNECT";
-        public static string Register = "REGISTER";
-        public static string Disconnect = "DISCONNECT";
-        public static string InviteForConversation = "INVITE";
-        public static string AcceptConversationInvite = "ACCEPT INVITE";
-        public static string SendConversationMessage = "SEND MESSAGE";
-        public static string SendImage = "SEND IMG";
-        public static string EndConversation = "END CONVERSATION";
+        public const string Connect = "CONNECT";
+        public const string Register = "REGISTER";
+        public const string Disconnect = "DISCONNECT";
+        public const string InviteForConversation = "INVITE";
+        public const string AcceptConversationInvite = "ACCEPT INVITE";
+        public const string SendConversationMessage = "SEND MESSAGE";
+        public const string SendImage = "SEND IMG";
+        public const string EndConversation = "END CONVERSATION";
     }
 }

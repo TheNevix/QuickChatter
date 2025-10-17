@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Reflection.PortableExecutable;
 
 class Program
 {
@@ -31,158 +32,196 @@ class Program
             Console.WriteLine("Client connected.");
 
             //Add the client list
-            _ = Task.Run(() => HandleClient(client));
+            _ = Task.Run(() => HandleConnectAsync(client));
         }
     }
 
-    private static async Task HandleClient(TcpClient client)
+    private static async Task HandleConnectAsync(TcpClient client)
+    {
+        using NetworkStream stream = client.GetStream();
+        StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+        using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+
+        // Wait for login message
+        string receivedMessage = await reader.ReadLineAsync();
+
+        if (string.IsNullOrWhiteSpace(receivedMessage))
+        {
+            Console.WriteLine("Client disconnected: Invalid login format.");
+            client.Close();
+            return;
+        }
+
+        await ProcessMessageAsync(client, receivedMessage, reader, writer);
+    }
+
+    private static async Task ProcessMessageAsync(TcpClient client,
+        string receivedMessage,
+        StreamReader reader, 
+        StreamWriter streamWriter)
+    {
+        bool isLoginMessage = receivedMessage.StartsWith(RequestCode.Connect);
+        bool isRegisterMessage = receivedMessage.StartsWith(RequestCode.Register);
+
+        if (isLoginMessage)
+        {
+            await ProcessLoginMessageAsync(client, receivedMessage, reader, streamWriter);
+
+            if (!client.Connected)
+                return;
+
+            // Connect to keep reading messages
+            await ClientSessionHandlerAsync(client, client.GetStream());
+        }
+
+        if (isRegisterMessage)
+        {
+            await ProcessRegisterMessageAsync(client, receivedMessage, reader, streamWriter);
+            return;
+        }
+    }
+
+    private static async Task ProcessLoginMessageAsync(TcpClient client,
+        string receivedMessage,
+        StreamReader reader,
+        StreamWriter writer)
+    {
+        var loginParts = receivedMessage.Split('|');
+
+        if (loginParts.Length != 3)
+        {
+            await writer.WriteLineAsync("LOGIN_FAIL|Malformed login message");
+            Console.WriteLine("Client disconnected: Malformed login message.");
+            client.Close();
+            return;
+        }
+
+        string username = loginParts[1];
+        string password = loginParts[2];
+
+        var user = _repo.LoginUser(username, password);
+
+        if (user == null)
+        {
+            await writer.WriteLineAsync("LOGIN_FAIL|Invalid credentials");
+            Console.WriteLine("Client disconnected: Invalid credentials.");
+            client.Close();
+            return;
+        }
+
+        await writer.WriteLineAsync("LOGIN_SUCCESS");
+
+        await Task.Delay(100);
+
+        _ = HandleConnect(client, user, loginParts);
+
+        Console.WriteLine("Client succesfully connected.");
+    }
+
+    private static async Task ProcessRegisterMessageAsync(TcpClient client,
+        string receivedMessage,
+        StreamReader reader,
+        StreamWriter writer)
+    {
+        var registerParts = receivedMessage.Split('|');
+        if (registerParts.Length != 3)
+        {
+            await writer.WriteLineAsync("REGISTER_FAIL|Malformed register message");
+            Console.WriteLine("Client disconnected: Malformed register message.");
+            client.Close();
+            return;
+        }
+
+        string username = registerParts[1];
+        string password = registerParts[2];
+
+        var isRegistered = _repo.RegisterUser(username, password);
+
+        if (!isRegistered)
+        {
+            await writer.WriteLineAsync("REGISTER_FAIL|Choose another username");
+            Console.WriteLine("Client disconnected: username already exists.");
+            client.Close();
+            return;
+        }
+
+        await writer.WriteLineAsync("REGISTER_SUCCESS");
+
+        client.Close();
+
+        Console.WriteLine("Client succesfully registered.");
+    }
+
+    private static async Task ClientSessionHandlerAsync(
+        TcpClient client,
+        NetworkStream stream)
     {
         try
         {
-            using NetworkStream stream = client.GetStream();
-            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-            using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
-
-            // STEP 1: Wait for login
-
-            string receivedMessage = await reader.ReadLineAsync();
-
-            if (string.IsNullOrWhiteSpace(receivedMessage))
-            {
-                Console.WriteLine("Client disconnected: Invalid login format.");
-                client.Close();
-                return;
-            }
-
-            bool isLoginMessage = receivedMessage.StartsWith(RequestCode.Connect);
-            bool isRegisterMessage = receivedMessage.StartsWith(RequestCode.Register);
-
-            if (isLoginMessage)
-            {
-                var loginParts = receivedMessage.Split('|');
-                if (loginParts.Length != 3)
-                {
-                    await writer.WriteLineAsync("LOGIN_FAIL|Malformed login message");
-                    Console.WriteLine("Client disconnected: Malformed login message.");
-                    client.Close();
-                    return;
-                }
-
-                string username = loginParts[1];
-                string password = loginParts[2];
-
-                var user = _repo.LoginUser(username, password);
-                if (user == null)
-                {
-                    await writer.WriteLineAsync("LOGIN_FAIL|Invalid credentials");
-                    Console.WriteLine("Client disconnected: Invalid credentials.");
-                    client.Close();
-                    return;
-                }
-
-                await writer.WriteLineAsync("LOGIN_SUCCESS");
-
-                await Task.Delay(100);
-
-                HandleConnect(client, user, loginParts);
-
-                Console.WriteLine("Client succesfully connected.");
-            }
-
-            if (isRegisterMessage) 
-            {
-                var registerParts = receivedMessage.Split('|');
-                if (registerParts.Length != 3)
-                {
-                    await writer.WriteLineAsync("REGISTER_FAIL|Malformed register message");
-                    Console.WriteLine("Client disconnected: Malformed register message.");
-                    client.Close();
-                    return;
-                }
-
-                string username = registerParts[1];
-                string password = registerParts[2];
-
-                var isRegistered = _repo.RegisterUser(username, password);
-
-                if (!isRegistered)
-                {
-                    await writer.WriteLineAsync("REGISTER_FAIL|Choose another username");
-                    Console.WriteLine("Client disconnected: username already exists.");
-                    client.Close();
-                    return;
-                }
-
-                await writer.WriteLineAsync("REGISTER_SUCCESS");
-
-                client.Close();
-
-                Console.WriteLine("Client succesfully registered.");
-
-                return;
-            }
-
-
-
             while (true)
             {
-                reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+                var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
-                //Read the data received from the client {username,ip}
-                string receivedData = await reader.ReadLineAsync();
+                // Read the data received from the client
+                string? receivedData = await reader.ReadLineAsync();
 
-                //If null, destroy connection
+                // If null, destroy connection
                 if (receivedData == null) break; // Client disconnected
 
-                //Log what we received
+                // Log what we received
                 Console.WriteLine($"Received: {receivedData}");
 
-                //Parse the received data {username,ip}
+                // Split the received data by the '|' character
                 var parts = receivedData.Split('|');
 
-                //Check if we have exactly 2 parts
-                if (parts[0] == RequestCode.Disconnect)
-                {
-                    //Handle Connect
-                    HandleDisconnect(client, parts);
-                    break;
-                }
-                else if (parts[0] == RequestCode.InviteForConversation)
-                {
-                    HandleInvite(client, parts);
-                }
-                else if (parts[0] == RequestCode.AcceptConversationInvite)
-                {
-                    HandleInviteAccept(client, parts);
-                }
-                else if (parts[0] == RequestCode.SendConversationMessage)
-                {
-                    HandleConversationMessage(client, parts);
-                }
-                else if (parts[0] == RequestCode.SendImage)
-                {
-                    var conversationId = parts[1];
-                    string fromUser = parts[2];
-                    string lengthString = parts[3];
-                    int byteLength = int.Parse(lengthString);
+                var command = parts[0];
 
-                    byte[] imageBuffer = new byte[byteLength];
-                    int totalRead = 0;
-
-                    while (totalRead < byteLength)
-                    {
-                        int read = await stream.ReadAsync(imageBuffer, totalRead, byteLength - totalRead);
-                        if (read == 0) break; // disconnected
-                        totalRead += read;
-                    }
-
-                    Console.WriteLine($"Received image ({totalRead} bytes) from {fromUser}");
-
-                    HandleImageMessage(client, parts, imageBuffer);
-                }
-                else if (parts[0] == RequestCode.EndConversation)
+                switch (command)
                 {
-                    HandleEndConversation(client, parts);
+                    case RequestCode.Disconnect:
+                        HandleDisconnect(client, parts);
+                        return;
+
+                    case RequestCode.InviteForConversation:
+                        HandleInvite(client, parts);
+                        break;
+
+                    case RequestCode.AcceptConversationInvite:
+                        HandleInviteAccept(client, parts);
+                        break;
+
+                    case RequestCode.SendConversationMessage:
+                        HandleConversationMessage(client, parts);
+                        break;
+
+                    case RequestCode.SendImage:
+                        var conversationId = parts[1];
+                        string fromUser = parts[2];
+                        string lengthString = parts[3];
+                        int byteLength = int.Parse(lengthString);
+
+                        byte[] imageBuffer = new byte[byteLength];
+                        int totalRead = 0;
+
+                        while (totalRead < byteLength)
+                        {
+                            int read = await stream.ReadAsync(imageBuffer, totalRead, byteLength - totalRead);
+                            if (read == 0) break; // disconnected
+                            totalRead += read;
+                        }
+
+                        Console.WriteLine($"Received image ({totalRead} bytes) from {fromUser}");
+
+                        HandleImageMessage(client, parts, imageBuffer);
+                        break;
+
+                    case RequestCode.EndConversation:
+                        HandleEndConversation(client, parts);
+                        break;
+
+                    default:
+                        Console.WriteLine($"Unknown request code: {command}");
+                        break;
                 }
             }
         }
@@ -195,6 +234,7 @@ class Program
             client.Close();
         }
     }
+
 
     public static async Task HandleConnect(TcpClient client, DomainUser.User user, string[] parts)
     {
@@ -217,7 +257,7 @@ class Program
         Broadcaster.SendNewOnlineUser(ConnectedClients, ConnectedClients[foundClientIndex]);
     }
 
-    public static async Task HandleDisconnect(TcpClient client, string[] parts)
+    public static void HandleDisconnect(TcpClient client, string[] parts)
     {
         // Find the client to remove
         var clientToRemove = ConnectedClients.FirstOrDefault(cc => cc.Client == client);
@@ -253,7 +293,7 @@ class Program
         Console.WriteLine($"Client {clientToRemove.Username} ({clientToRemove.Ip}) disconnected.");
     }
 
-    public static async Task HandleInvite(TcpClient client, string[] parts)
+    public static void HandleInvite(TcpClient client, string[] parts)
     {
         var accepterIndex = ConnectedClients.FindIndex(cc => cc.Username == parts[1]);
         var inviterIndex = ConnectedClients.FindIndex(cc => cc.Client == client);
@@ -281,7 +321,7 @@ class Program
         Broadcaster.SendUpdatedClients(ConnectedClients, new List<ConnectedClient> { ConnectedClients[accepterIndex], ConnectedClients[inviterIndex] });
     }
 
-    public static async Task HandleInviteAccept(TcpClient client, string[] parts)
+    public static void HandleInviteAccept(TcpClient client, string[] parts)
     {
         var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
 
@@ -291,7 +331,7 @@ class Program
         Broadcaster.SendConversationInviteAccepted(ClientConversations[conversationIndex]);
     }
 
-    public static async Task HandleConversationMessage(TcpClient client, string[] parts)
+    public static void HandleConversationMessage(TcpClient client, string[] parts)
     {
         ConnectedClient sender = new ConnectedClient();
         ConnectedClient receiver = new ConnectedClient();
@@ -329,7 +369,7 @@ class Program
         Broadcaster.SendConversationMessage(receiver, convoMessage);
     }
 
-    public static async Task HandleImageMessage(TcpClient client, string[] parts, byte[] imageBuffer)
+    public static void HandleImageMessage(TcpClient client, string[] parts, byte[] imageBuffer)
     {
         ConnectedClient sender = new ConnectedClient();
         ConnectedClient receiver = new ConnectedClient();
@@ -346,7 +386,6 @@ class Program
             sender = ClientConversations[conversationIndex].Accepter;
             receiver = ClientConversations[conversationIndex].Inviter;
         }
-
 
         var convoMessage = new ConversationMessage
         {
@@ -368,7 +407,7 @@ class Program
         Broadcaster.SendImageMessage(receiver, convoMessage, imageBuffer);
     }
 
-    public static async Task HandleEndConversation(TcpClient client, string[] parts)
+    public static void HandleEndConversation(TcpClient client, string[] parts)
     {
         //Get the conversation index
         var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
