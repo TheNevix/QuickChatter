@@ -40,7 +40,7 @@ class Program
         try
         {
             using NetworkStream stream = client.GetStream();
-            using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
             using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
             // STEP 1: Wait for login
@@ -87,7 +87,6 @@ class Program
                 HandleConnect(client, user, loginParts);
 
                 Console.WriteLine("Client succesfully connected.");
-                return;
             }
 
             if (isRegisterMessage) 
@@ -127,6 +126,8 @@ class Program
 
             while (true)
             {
+                reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+
                 //Read the data received from the client {username,ip}
                 string receivedData = await reader.ReadLineAsync();
 
@@ -157,6 +158,27 @@ class Program
                 else if (parts[0] == RequestCode.SendConversationMessage)
                 {
                     HandleConversationMessage(client, parts);
+                }
+                else if (parts[0] == RequestCode.SendImage)
+                {
+                    var conversationId = parts[1];
+                    string fromUser = parts[2];
+                    string lengthString = parts[3];
+                    int byteLength = int.Parse(lengthString);
+
+                    byte[] imageBuffer = new byte[byteLength];
+                    int totalRead = 0;
+
+                    while (totalRead < byteLength)
+                    {
+                        int read = await stream.ReadAsync(imageBuffer, totalRead, byteLength - totalRead);
+                        if (read == 0) break; // disconnected
+                        totalRead += read;
+                    }
+
+                    Console.WriteLine($"Received image ({totalRead} bytes) from {fromUser}");
+
+                    HandleImageMessage(client, parts, imageBuffer);
                 }
                 else if (parts[0] == RequestCode.EndConversation)
                 {
@@ -305,6 +327,45 @@ class Program
 
         //Send the received message to the other client
         Broadcaster.SendConversationMessage(receiver, convoMessage);
+    }
+
+    public static async Task HandleImageMessage(TcpClient client, string[] parts, byte[] imageBuffer)
+    {
+        ConnectedClient sender = new ConnectedClient();
+        ConnectedClient receiver = new ConnectedClient();
+        var conversationIndex = ClientConversations.FindIndex(cc => cc.Id.ToString() == parts[1]);
+
+        //Check who sended it
+        if (ClientConversations[conversationIndex].Inviter.Id.ToString() == parts[2])
+        {
+            sender = ClientConversations[conversationIndex].Inviter;
+            receiver = ClientConversations[conversationIndex].Accepter;
+        }
+        else
+        {
+            sender = ClientConversations[conversationIndex].Accepter;
+            receiver = ClientConversations[conversationIndex].Inviter;
+        }
+
+
+        var convoMessage = new ConversationMessage
+        {
+            Message = "",
+            SentBy = new User
+            {
+                Id = sender.Id,
+                IsAvailable = false,
+                Username = sender.Username,
+                Ip = sender.Ip,
+            },
+            SentOn = DateTime.UtcNow,
+        };
+
+        //Add the message to the list
+        ClientConversations[conversationIndex].Messages.Add(convoMessage);
+
+        //Send the received message to the other client
+        Broadcaster.SendImageMessage(receiver, convoMessage, imageBuffer);
     }
 
     public static async Task HandleEndConversation(TcpClient client, string[] parts)

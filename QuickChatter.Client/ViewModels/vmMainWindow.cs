@@ -1,4 +1,5 @@
-﻿using QuickChatter.Client.Helpers;
+﻿using Microsoft.Win32;
+using QuickChatter.Client.Helpers;
 using QuickChatter.Client.Views;
 using QuickChatter.Client.Views.Controls;
 using QuickChatter.Models;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace QuickChatter.Client.ViewModels
 {
@@ -135,6 +137,7 @@ namespace QuickChatter.Client.ViewModels
 
         //Send conversation message
         public ICommand SendConversationMessageCommand { get; }
+        public ICommand UploadImageCommand { get; }
         //Back to menu/End conversation
         public ICommand BackToMenuCommand { get; }
 
@@ -149,6 +152,7 @@ namespace QuickChatter.Client.ViewModels
             RegisterCommand = new RelayCommand(RegisterToServer, CanButtonClick);
             InviteForConversationCommand = new RelayCommand(InviteForConversation, CanButtonClick);
             SendConversationMessageCommand = new RelayCommand(SendConversationMessage, CanButtonClick);
+            UploadImageCommand = new RelayCommand(UploadImage, CanButtonClick);
             BackToMenuCommand = new RelayCommand(BackToMenu, CanButtonClick);
             KeyDownCommand = new RelayCommand<KeyEventArgs>(HandleKeyDown, CanButtonClick);
 
@@ -302,6 +306,53 @@ namespace QuickChatter.Client.ViewModels
                 ServerHelper.SendConversationMessage(_client, _writer, _message, ConversationId, UserId);
 
                 ConvoMessage = string.Empty;
+            }
+        }
+
+        private void UploadImage(object sender)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Image files (*.jpg;*.png;*.jpeg)|*.jpg;*.png;*.jpeg",
+                Title = "Select an Image"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var fileBytes = File.ReadAllBytes(dialog.FileName);
+
+                if (fileBytes.Length > 300 * 1024)
+                {
+                    MessageBox.Show("Image must be under 100 KB.");
+                    return;
+                }
+
+                var bitmap = new BitmapImage();
+                using (var ms = new MemoryStream(fileBytes))
+                {
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.StreamSource = ms;
+                    bitmap.EndInit();
+                }
+                bitmap.Freeze(); // safe to use from any thread
+
+                // 2) Build your local ConversationMessage
+                var localMessage = new ConversationMessage
+                {
+                    Message = "",
+                    SentOn = DateTime.UtcNow,
+                    SentBy = new User
+                    {
+                        Username = UserSettings.Username,
+                    },
+                    Image = bitmap
+                };
+
+                ConversationMessages.Add(localMessage);
+
+                // Send image to server (call your TCP logic)
+                ServerHelper.SendConversationImage(_client, _writer, fileBytes, ConversationId, UserId);
             }
         }
 

@@ -13,6 +13,7 @@
         <converters:UsernameToAlignmentConverter x:Key="UsernameToAlignmentConverter" />
         <converters:UsernameToBackgroundConverter x:Key="UsernameToBackgroundConverter" />
         <converters:UsernameToForegroundConverter x:Key="UsernameToForegroundConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </UserControl.Resources>
     <Grid>
         <!-- Define the row definitions -->
@@ -132,8 +133,14 @@
                             Padding="10" 
                             MaxWidth="500"
                             HorizontalAlignment="Stretch">
-                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{Binding SentBy.Username, Converter={StaticResource UsernameToForegroundConverter}}" />
+                            <StackPanel>
+                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" 
+                                        Foreground="{Binding SentBy.Username, Converter={StaticResource UsernameToForegroundConverter}}" />
+                                <Image Source="{Binding Image}" Width="200" Margin="0,10,0,0"
+                                    Visibility="{Binding Image, Converter={StaticResource NullToVisibilityConverter}}" />
+                            </StackPanel>
                         </Border>
+
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
@@ -142,44 +149,91 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
+                <!-- Column 0: 📎 -->
                 <ColumnDefinition Width="*" />
+                <!-- Column 1: TextBox + Send -->
             </Grid.ColumnDefinitions>
 
-            <TextBox HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="White" TextWrapping="Wrap" Text="{Binding ConvoMessage, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Width="700" Height="40" Background="Transparent" BorderBrush="#eb6134">
-                <i:Interaction.Behaviors>
-                    <behaviors:KeyDownToCommandBehavior
-                        Command="{Binding KeyDownCommand}" />
-                </i:Interaction.Behaviors>
-                <TextBox.Template>
-                    <ControlTemplate TargetType="TextBox">
-                        <Grid>
-                            <Border x:Name="border"
-                                Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="4" />
-                            <ScrollViewer x:Name="PART_ContentHost" 
-                                Margin="4"
-                                Focusable="False" 
-                                VerticalScrollBarVisibility="Hidden" 
-                                HorizontalScrollBarVisibility="Hidden" />
-                        </Grid>
-                    </ControlTemplate>
-                </TextBox.Template>
-
-            </TextBox>
-            <Button Command="{Binding SendConversationMessageCommand}" Grid.Column="1" FontFamily="Segoe MDL2 Assets" Content="&#xE122;" Cursor="Hand" FontSize="35" Foreground="#eb6134" Width="40" Height="40" Background="Transparent" BorderThickness="0">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                    BorderBrush="{TemplateBinding BorderBrush}" 
-                    BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Button.Template>
+            <!-- 📎 Upload Button -->
+            <Button Grid.Column="0"
+                Command="{Binding UploadImageCommand}"
+                Width="40" Height="40"
+                Background="Transparent"
+                BorderBrush="#eb6134"
+                Foreground="#eb6134"
+                BorderThickness="1"
+                Margin="10,0,5,0"
+                ToolTip="Upload Image"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center">
+                <TextBlock Text="📎" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center" />
             </Button>
 
+            <!-- TextBox + Send Button in a Grid -->
+            <Grid Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <!-- TextBox -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- Send Button -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Message TextBox -->
+                <TextBox Grid.Column="0"
+                 Margin="10,0,0,0"
+                 Foreground="White"
+                 TextWrapping="Wrap"
+                 Text="{Binding ConvoMessage, UpdateSourceTrigger=PropertyChanged}"
+                 VerticalAlignment="Center"
+                 Height="40"
+                 Background="Transparent"
+                 BorderBrush="#eb6134">
+                    <i:Interaction.Behaviors>
+                        <behaviors:KeyDownToCommandBehavior
+                        Command="{Binding KeyDownCommand}" />
+                    </i:Interaction.Behaviors>
+                    <TextBox.Template>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" />
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="4"
+                                      Focusable="False"
+                                      VerticalScrollBarVisibility="Hidden"
+                                      HorizontalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </ControlTemplate>
+                    </TextBox.Template>
+                </TextBox>
+
+                <!-- Send Button -->
+                <Button Grid.Column="1"
+                Command="{Binding SendConversationMessageCommand}"
+                FontFamily="Segoe MDL2 Assets"
+                Content="&#xE122;"
+                Cursor="Hand"
+                FontSize="35"
+                Foreground="#eb6134"
+                Width="40" Height="40"
+                Background="Transparent"
+                BorderThickness="0"
+                HorizontalAlignment="Left"
+                Margin="10,0,0,0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
         </Grid>
 
     </Grid>

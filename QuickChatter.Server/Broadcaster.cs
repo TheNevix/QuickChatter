@@ -181,6 +181,27 @@ namespace QuickChatter.Server
         }
 
         /// <summary>
+        /// Broadcasts an image
+        /// </summary>
+        public static async void SendImageMessage(ConnectedClient receiver, ConversationMessage convoMessage, byte[] imageBuffer)
+        {
+            var stream = receiver.Client.GetStream();
+            string json = JsonConvert.SerializeObject(convoMessage);
+            string header = $"{ResponseCode.ReceivedConversationImage}|{json}|{imageBuffer.Length}\r\n";
+
+            // Turn header into bytes and send it
+            byte[] headerBytes = Encoding.UTF8.GetBytes(header);
+            await stream.WriteAsync(headerBytes, 0, headerBytes.Length).ConfigureAwait(false);
+
+            // Send the raw image bytes
+            await stream.WriteAsync(imageBuffer, 0, imageBuffer.Length).ConfigureAwait(false);
+
+            // Send a trailing newline to re-sync
+            byte[] newline = Encoding.UTF8.GetBytes("\r\n");
+            await stream.WriteAsync(newline, 0, newline.Length).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Broadcasts a list of connected clients to a requesting client
         /// </summary>
         /// <param name="connectedClients">A list of connected clients</param>

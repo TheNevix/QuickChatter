@@ -10,6 +10,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace QuickChatter.Client.Helpers
 {
@@ -158,6 +159,21 @@ namespace QuickChatter.Client.Helpers
             }
         }
 
+        public static async Task SendConversationImage(TcpClient client, StreamWriter writer, byte[] imageBytes, string conversationId, string senderId)
+        {
+            if (imageBytes == null || imageBytes.Length == 0)
+                return;
+
+            var stream = client.GetStream();
+
+            // Step 1: Send header
+            string header = $"{RequestCode.SendImage}|{conversationId}|{senderId}|{imageBytes.Length}";
+            await writer.WriteLineAsync(header);
+
+            // Step 2: Send image bytes (raw, not encoded)
+            await stream.WriteAsync(imageBytes, 0, imageBytes.Length);
+        }
+
         /// <summary>
         /// Invite for conversation
         /// </summary>
@@ -184,109 +200,165 @@ namespace QuickChatter.Client.Helpers
         {
             try
             {
-                using var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+                var stream = client.GetStream();
+
                 while (true)
                 {
-                    string message = await reader.ReadLineAsync();
-                    if (message == null)
+                    string? message = await ReadLineFromStreamAsync(stream);
+                    if (message == null) break;
+
+                    var parts = message.Split('|');
+
+                    if (parts[0] == ResponseCode.InviteReceived)
                     {
-                        break;
+                        var result = MessageBox.Show(parts[2], "You have been invited", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.Yes)
+                            AcceptConversationInvite(client, writer, parts[1]);
                     }
-                    else
+                    else if (parts[0] == ResponseCode.Connected)
                     {
-                        var parts = message.Split('|');
-
-                        if (parts[0] == ResponseCode.InviteReceived)
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            var result = MessageBox.Show(parts[2], "You have been invited", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                            if (result == MessageBoxResult.Yes) 
+                            vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
+                            vm.UserId = parts[2];
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.DisonnectedUser)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            var id = Guid.Parse(parts[1]);
+                            var userToRemove = vm.OnlineUsers.FirstOrDefault(x => x.Id == id);
+                            if (userToRemove != null)
+                                vm.OnlineUsers.Remove(userToRemove);
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.ConnectedUser)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            vm.OnlineUsers.Add(JsonConvert.DeserializeObject<User>(parts[1]));
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.UpdatedUsers)
+                    {
+                        var updatedUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            foreach (var updatedUser in updatedUsers)
                             {
-                                //Send invite accepted
-                                AcceptConversationInvite(client, writer, parts[1]);
+                                vm.OnlineUsers.First(u => u.Id == updatedUser.Id).IsAvailable = updatedUser.IsAvailable;
                             }
-                        }
-                        else if (parts[0] == ResponseCode.Connected)
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.AcceptedInvite)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                vm.OnlineUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
-                                vm.UserId = parts[2];
-                            });
-                            var e = 5;
-                        }
-                        else if (parts[0] == ResponseCode.DisonnectedUser)
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var id = Guid.Parse(parts[1]);
-                                var userToRemove = vm.OnlineUsers.FirstOrDefault(x => x.Id == id);
-                                if (userToRemove != null)
-                                {
-                                    vm.OnlineUsers.Remove(userToRemove);
-                                }
-                            });
-                            var e = 5;
-                        }
-                        else if (parts[0] == ResponseCode.ConnectedUser)
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                vm.OnlineUsers.Add(JsonConvert.DeserializeObject<User>(parts[1]));
-                            });
-                        }
-                        else if (parts[0] == ResponseCode.UpdatedUsers)
-                        {
-                            var updatedUsers = JsonConvert.DeserializeObject<ObservableCollection<User>>(parts[1]);
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                foreach (var updatedUser in updatedUsers)
-                                {
-                                    vm.OnlineUsers.First(u => u.Id == updatedUser.Id).IsAvailable = updatedUser.IsAvailable;
-                                }
-                            });
-                        }
-                        else if (parts[0] == ResponseCode.AcceptedInvite)
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                vm.ConversationId = parts[1];
-                                if (vm.SelectedUser == null)
-                                {
-                                    vm.SelectedUser = new User();
-                                }
-                                vm.SelectedUser.Username = parts[2];
-                                vm.CurrentControl = new ucConversation();
-                            });
-                        }
-                        else if (parts[0] == ResponseCode.ReceivedConversationMessage)
-                        {
-                            var convoMessage = JsonConvert.DeserializeObject<ConversationMessage>(parts[1]);
+                            vm.ConversationId = parts[1];
+                            vm.SelectedUser ??= new User();
+                            vm.SelectedUser.Username = parts[2];
+                            vm.CurrentControl = new ucConversation();
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.ReceivedConversationMessage)
+                    {
+                        var convoMessage = JsonConvert.DeserializeObject<ConversationMessage>(parts[1]);
 
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                vm.ConversationMessages.Add(convoMessage);
-                            });
-                        }
-                        else if (parts[0] == ResponseCode.ConversationEnded)
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                vm.CurrentControl = new ucMainScreen();
-                            });
+                            vm.ConversationMessages.Add(convoMessage);
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.ReceivedConversationImage)
+                    {
+                        var convoMessage = JsonConvert.DeserializeObject<ConversationMessage>(parts[1]);
+                        int byteLength = int.Parse(parts[2]);
 
-                            Task.Run(() =>
+                        byte[] buffer = new byte[byteLength];
+                        int totalRead = 0;
+
+                        while (totalRead < byteLength)
+                        {
+                            int read = await stream.ReadAsync(buffer, totalRead, byteLength - totalRead);
+                            if (read == 0)
                             {
-                                MessageBox.Show(parts[1]);
-                            });
+                                Console.WriteLine("Client stream closed early!");
+                                break;
+                            }
+                            totalRead += read;
                         }
+
+                        var bitmapImage = ConvertToImage(buffer);
+                        convoMessage.Image = bitmapImage;
+
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            vm.ConversationMessages.Add(convoMessage);
+                        });
+                    }
+                    else if (parts[0] == ResponseCode.ConversationEnded)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            vm.CurrentControl = new ucMainScreen();
+                        });
+
+                        Task.Run(() =>
+                        {
+                            MessageBox.Show(parts[1]);
+                        });
                     }
                 }
             }
             catch (Exception ex)
             {
-                var e = ex;
+                Console.WriteLine("ListenForUpdates error: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Converts an array of bytes to a BitmapImage
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        private static BitmapImage ConvertToImage(byte[] bytes)
+        {
+            var image = new BitmapImage();
+            using var ms = new MemoryStream(bytes);
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.StreamSource = ms;
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+
+        /// <summary>
+        /// Reads a stream based on \n and \r and converts it into a string
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        private static async Task<string?> ReadLineFromStreamAsync(Stream stream)
+        {
+            var buffer = new List<byte>();
+            var temp = new byte[1];
+
+            while (true)
+            {
+                int read = await stream.ReadAsync(temp, 0, 1);
+                if (read == 0) break;
+
+                if (temp[0] == '\n')
+                    break;
+
+                if (temp[0] != '\r')
+                    buffer.Add(temp[0]);
+            }
+
+            return Encoding.UTF8.GetString(buffer.ToArray());
+        }
+
     }
 }

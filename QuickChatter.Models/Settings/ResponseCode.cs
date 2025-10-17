@@ -9,6 +9,7 @@
         public static string UpdatedUsers = "UPDATED USERS";
         public static string AcceptedInvite = "ACCEPTED INVITE";
         public static string ReceivedConversationMessage = "RECEIVED MESSAGE";
+        public static string ReceivedConversationImage = "RECEIVED IMAGE";
         public static string ConversationEnded = "CONVERSATION ENDED";
     }
 }
